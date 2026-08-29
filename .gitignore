@@ -1,0 +1,8 @@
+.env
+node_modules/
+*.log
+
+database/*.db
+database/*.db-shm
+database/*.db-wal
+database/sessions.sqlite

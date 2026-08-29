@@ -1,0 +1,4769 @@
+<!doctype html>
+<html lang="en" class="auth-pending">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+<script>document.documentElement.dataset.theme=localStorage.getItem('dakkak-theme')==='light'?'light':'dark';</script>
+    <title>Dakkak Electric POS</title>
+    <style>
+      :root {
+        --bg: #0d0f10;
+        --panel: #151819;
+        --panel2: #1a1e1f;
+        --line: #292e30;
+        --text: #f0f2f2;
+        --muted: #8b9497;
+        --accent: #e7a532;
+        --danger: #e25c5c;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          14px Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      .shell {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        height: 58px;
+        display: flex;
+        align-items: center;
+        padding: 0 22px;
+        background: #111314;
+        border-bottom: 1px solid var(--line);
+        gap: 26px;
+      }
+      .brand {
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+      }
+      .brand i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        background: var(--accent);
+        margin-right: 9px;
+      }
+      .nav {
+        display: flex;
+        align-self: stretch;
+      }
+      .nav button {
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: none;
+        color: var(--muted);
+        padding: 0 16px;
+        font-weight: 650;
+      }
+      .nav button:hover {
+        color: var(--text);
+      }
+      .nav button.active {
+        color: var(--text);
+        border-color: var(--accent);
+      }
+      .clock {
+        margin-left: auto;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .view {
+        display: none;
+        flex: 1;
+        min-height: 0;
+      }
+      .view.active {
+        display: block;
+      }
+      .pos-view.active {
+        display: grid;
+        grid-template-columns: minmax(430px, 1fr) minmax(330px, 420px);
+        height: calc(100vh - 58px);
+      }
+      .catalog {
+        padding: 18px 20px;
+        overflow: auto;
+      }
+      .cart {
+        border-left: 1px solid var(--line);
+        background: #111415;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0;
+      }
+      small,
+      .hint {
+        color: var(--muted);
+      }
+      .search-wrap {
+        position: relative;
+      }
+      .search-wrap:before {
+        content: "⌕";
+        position: absolute;
+        left: 16px;
+        top: 11px;
+        font-size: 22px;
+        color: var(--muted);
+      }
+      .search {
+        width: 100%;
+        height: 48px;
+        border: 1px solid #353b3d;
+        border-radius: 7px;
+        background: #1a1e1f;
+        color: #fff;
+        padding: 0 45px;
+        font-size: 17px;
+        outline: none;
+      }
+      .search:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px #e7a53218;
+      }
+      .key {
+        position: absolute;
+        right: 12px;
+        top: 13px;
+        border: 1px solid #414749;
+        border-radius: 4px;
+        padding: 3px 7px;
+        color: #737c7f;
+        font-size: 11px;
+      }
+      .result-label {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 18px 4px 7px;
+      }
+      .results {
+        border-top: 1px solid var(--line);
+      }
+      .result {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 90px;
+        gap: 8px;
+        text-align: left;
+        color: var(--text);
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid #232829;
+        padding: 10px 8px;
+      }
+      .result:hover,
+      .result.selected {
+        background: #1b1f20;
+      }
+      .result.selected {
+        box-shadow: inset 2px 0 var(--accent);
+      }
+      .result-name {
+        font-weight: 650;
+        line-height: 1.35;
+      }
+      .result-cost {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 3px;
+      }
+      .result-price {
+        text-align: right;
+        font-size: 15px;
+        font-weight: 750;
+        font-variant-numeric: tabular-nums;
+      }
+      .empty {
+        color: var(--muted);
+        padding: 60px 15px;
+        text-align: center;
+      }
+      .cart-head {
+        height: 60px;
+        padding: 0 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+      }
+      .cart-head h2 {
+        font-size: 15px;
+        margin: 0;
+      }
+      .clear {
+        border: 0;
+        background: none;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .clear:hover {
+        color: var(--danger);
+      }
+      .cart-items {
+        flex: 1;
+        overflow: auto;
+      }
+      .cart-empty {
+        display: grid;
+        place-items: center;
+        height: 100%;
+        color: #737c7f;
+        text-align: center;
+        line-height: 1.7;
+      }
+      .cart-empty b {
+        color: #aab0b2;
+      }
+      .cart-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        padding: 12px 18px;
+        border-bottom: 1px solid #232728;
+      }
+      .cart-row strong {
+        display: block;
+      }
+      .cart-meta {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .qty {
+        display: flex;
+        border: 1px solid #33393b;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .qty button {
+        width: 25px;
+        height: 23px;
+        border: 0;
+        background: #202425;
+        color: #d8dddd;
+      }
+      .qty span {
+        width: 26px;
+        text-align: center;
+        line-height: 23px;
+      }
+      .remove {
+        border: 0;
+        background: none;
+        color: #697174;
+      }
+      .remove:hover {
+        color: var(--danger);
+      }
+      .cart-price {
+        font-weight: 700;
+      }
+      .total {
+        padding: 18px;
+        border-top: 1px solid var(--line);
+      }
+      .total-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        margin-bottom: 14px;
+        color: var(--muted);
+      }
+      .total-line b {
+        font-size: 25px;
+        color: #fff;
+      }
+      .checkout {
+        width: 100%;
+        height: 44px;
+        border: 0;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #17130b;
+        font-weight: 800;
+      }
+      .checkout:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .products-view {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+      }
+      .product-toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .product-toolbar .search-wrap {
+        flex: 1;
+      }
+      .product-toolbar .search {
+        height: 42px;
+        font-size: 14px;
+      }
+      .product-toolbar .search-wrap:before {
+        top: 8px;
+      }
+      .product-toolbar .key {
+        display: none;
+      }
+      .add {
+        height: 42px;
+        border: 1px solid #d49a34;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #17130b;
+        padding: 0 16px;
+        font-weight: 750;
+      }
+      .table {
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        overflow: hidden;
+        background: var(--panel);
+      }
+      .thead,
+      .product-row {
+        display: grid;
+        grid-template-columns: minmax(260px, 1fr) 125px 125px 38px;
+        align-items: center;
+      }
+      .thead {
+        height: 34px;
+        background: #111415;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+      .thead > * {
+        padding: 0 13px;
+      }
+      .product-row {
+        min-height: 42px;
+        border-top: 1px solid #252a2c;
+      }
+      .product-row:hover {
+        background: #1b1f20;
+      }
+      .product-row > div {
+        padding: 7px 13px;
+      }
+      .product-name {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+      }
+      .num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .edit {
+        opacity: 0;
+        border: 0;
+        background: none;
+        color: #aab1b3;
+        font-size: 15px;
+      }
+      .product-row:hover .edit,
+      .edit:focus {
+        opacity: 1;
+      }
+      .edit:hover {
+        color: var(--accent);
+      }
+      .count {
+        font-size: 12px;
+        color: var(--muted);
+        margin-left: auto;
+      }
+      dialog {
+        width: min(500px, calc(100% - 24px));
+        padding: 0;
+        border: 1px solid #343a3c;
+        border-radius: 8px;
+        background: #171a1b;
+        color: var(--text);
+        box-shadow: 0 25px 80px #000b;
+      }
+      dialog::backdrop {
+        background: #000b;
+      }
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .modal-head h2 {
+        font-size: 16px;
+        margin: 0;
+      }
+      .x {
+        border: 0;
+        background: none;
+        color: var(--muted);
+        font-size: 20px;
+      }
+      .form {
+        padding: 18px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 13px;
+      }
+      .form label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .form .wide {
+        grid-column: 1/-1;
+      }
+      .form input {
+        height: 38px;
+        border: 1px solid #343a3c;
+        border-radius: 5px;
+        background: #101213;
+        color: #fff;
+        padding: 0 10px;
+        outline: none;
+      }
+      .form input:focus {
+        border-color: var(--accent);
+      }
+      .modal-foot {
+        display: flex;
+        justify-content: space-between;
+        padding: 13px 18px;
+        border-top: 1px solid var(--line);
+      }
+      .right {
+        display: flex;
+        gap: 8px;
+      }
+      .btn {
+        height: 36px;
+        border: 1px solid #353b3d;
+        border-radius: 5px;
+        background: #202425;
+        color: #ddd;
+        padding: 0 14px;
+      }
+      .btn.save {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #17130b;
+        font-weight: 750;
+      }
+      .btn.delete {
+        color: #db7777;
+        background: transparent;
+        border-color: #5a3333;
+      }
+      .toast {
+        position: fixed;
+        bottom: 18px;
+        left: 50%;
+        transform: translate(-50%, 70px);
+        background: #eee;
+        color: #17191a;
+        border-radius: 5px;
+        padding: 10px 15px;
+        opacity: 0;
+        transition: 0.2s;
+        z-index: 5;
+      }
+      .toast.show {
+        transform: translate(-50%, 0);
+        opacity: 1;
+      }
+      .toast.error {
+        background: var(--danger);
+        color: white;
+      }
+      /* Products price-book refinements */
+      .nav {
+        align-items: center;
+        gap: 8px;
+      }
+      .nav button {
+        height: 100%;
+      }
+      .nav .pos-action {
+        height: 34px;
+        border: 1px solid #57441f;
+        border-radius: 5px;
+        background: #211c13;
+        color: var(--accent);
+        padding: 0 14px;
+      }
+      .nav .pos-action.active {
+        background: var(--accent);
+        color: #17130b;
+        border-color: var(--accent);
+      }
+      .clock {
+        font-size: 18px;
+        font-weight: 650;
+        letter-spacing: 0.03em;
+      }
+      .products-view {
+        padding: 0 20px 20px;
+      }
+      .products-sticky {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: var(--bg);
+        padding: 18px 0 12px;
+      }
+      .product-toolbar {
+        margin: 12px 0 0;
+      }
+      .product-toolbar .search {
+        height: 44px;
+        font-size: 15px;
+      }
+      .add {
+        height: 44px;
+      }
+      .thead,
+      .product-row {
+        grid-template-columns: minmax(260px, 1fr) 140px 150px 38px;
+      }
+      .thead {
+        height: 35px;
+        font-size: 11px;
+      }
+      .product-row {
+        min-height: 46px;
+        cursor: pointer;
+      }
+      .product-row > div {
+        padding: 8px 14px;
+      }
+      .product-name {
+        font-size: 15px;
+        font-weight: 650;
+        line-height: 1.3;
+      }
+      .num {
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .selling {
+        font-size: 17px;
+        font-weight: 800;
+        color: #fff;
+      }
+      .count-block {
+        text-align: right;
+        white-space: nowrap;
+      }
+      .count {
+        display: block;
+        margin: 0;
+        font-size: 14px;
+        font-weight: 650;
+        color: #d8dcdd;
+      }
+      .shown {
+        display: block;
+        margin-top: 2px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .form input[type="number"] {
+        appearance: textfield;
+        -moz-appearance: textfield;
+      }
+      .form input[type="number"]::-webkit-inner-spin-button,
+      .form input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      @media (max-width: 800px) {
+        .pos-view.active {
+          grid-template-columns: 1fr;
+          height: auto;
+        }
+        .cart {
+          border-left: 0;
+          border-top: 1px solid var(--line);
+          min-height: 380px;
+        }
+        .catalog {
+          padding: 14px;
+        }
+        .products-view {
+          padding: 0 14px 14px;
+        }
+        .thead,
+        .product-row {
+          grid-template-columns: 1fr 90px 100px 34px;
+        }
+        .thead > *,
+        .product-row > div {
+          padding-left: 8px;
+          padding-right: 8px;
+        }
+        .clock {
+          font-size: 16px;
+        }
+      }
+      @media (max-width: 500px) {
+        .topbar {
+          padding: 0 12px;
+          gap: 10px;
+        }
+        .brand {
+          font-size: 13px;
+        }
+        .nav button {
+          padding: 0 10px;
+        }
+        .form {
+          grid-template-columns: 1fr;
+        }
+        .form .wide {
+          grid-column: auto;
+        }
+        .thead,
+        .product-row {
+          grid-template-columns: 1fr 76px 76px 30px;
+        }
+        .product-row {
+          font-size: 12px;
+        }
+        .product-toolbar {
+          flex-wrap: wrap;
+        }
+        .product-toolbar .search-wrap {
+          flex-basis: 100%;
+        }
+        .add {
+          flex: 1;
+        }
+        .count {
+          order: 3;
+        }
+      }
+      .import {
+        height: 44px;
+        white-space: nowrap;
+      }
+      .import-dialog {
+        width: min(650px, calc(100% - 24px));
+      }
+      .import-body {
+        padding: 18px;
+      }
+      .file-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .file-row input {
+        display: none;
+      }
+      .link-btn {
+        border: 0;
+        background: none;
+        color: var(--accent);
+        padding: 0;
+        text-decoration: underline;
+      }
+      .import-summary {
+        margin-top: 16px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 14px;
+        line-height: 1.8;
+      }
+      .import-summary b {
+        font-size: 16px;
+      }
+      .import-options {
+        display: grid;
+        gap: 9px;
+        margin-top: 15px;
+      }
+      .import-options label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .preview-table {
+        margin-top: 14px;
+        max-height: 180px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+      }
+      .preview-row {
+        display: grid;
+        grid-template-columns: 55px 1fr 110px;
+        gap: 8px;
+        padding: 7px 9px;
+        border-top: 1px solid var(--line);
+        font-size: 12px;
+      }
+      .preview-row:first-child {
+        border-top: 0;
+      }
+      .preview-row .bad {
+        color: #ef8a8a;
+      }
+      .import-result {
+        text-align: center;
+        padding: 26px 10px;
+        font-size: 15px;
+        line-height: 1.8;
+      }
+      .import-result b {
+        font-size: 19px;
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .gear {
+        width: 44px;
+        padding: 0;
+        font-size: 22px;
+        color: #c7cdcf;
+        background: #181c1d;
+        border-color: #414749;
+      }
+      .gear:hover {
+        color: var(--accent);
+        background: #202526;
+        border-color: #665126;
+      }
+      .delete-product {
+        height: 36px;
+        border: 1px solid #bf4646;
+        border-radius: 5px;
+        background: #b63f3f;
+        color: #fff;
+        padding: 0 14px;
+        font-weight: 700;
+      }
+      .delete-product:hover {
+        background: #cc4a4a;
+        border-color: #d65a5a;
+      }
+      .settings-body {
+        padding: 18px;
+        display: grid;
+        gap: 4px;
+      }
+      .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        min-height: 54px;
+        border-bottom: 1px solid var(--line);
+      }
+      .setting-row strong {
+        font-weight: 650;
+      }
+      .toggle {
+        position: relative;
+        display: inline-block;
+        width: 54px;
+        height: 28px;
+        flex: none;
+      }
+      .toggle input {
+        position: absolute;
+        opacity: 0;
+      }
+      .toggle-track {
+        position: absolute;
+        inset: 0;
+        border: 1px solid #414749;
+        border-radius: 18px;
+        background: #202425;
+        transition: 0.18s;
+      }
+      .toggle-track:before {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        left: 3px;
+        top: 3px;
+        border-radius: 50%;
+        background: #899194;
+        transition: 0.18s;
+      }
+      .toggle input:checked + .toggle-track {
+        border-color: #b98225;
+        background: #3a2c13;
+      }
+      .toggle input:checked + .toggle-track:before {
+        transform: translateX(26px);
+        background: var(--accent);
+      }
+      .select-setting {
+        height: 34px;
+        border: 1px solid #343a3c;
+        border-radius: 5px;
+        background: #101213;
+        color: #fff;
+        padding: 0 9px;
+      }
+      .opening-link {
+        justify-content: flex-start;
+        margin: 7px 0 10px;
+        color: var(--accent);
+      }
+      .stock-on.cost-on .thead,
+      .stock-on.cost-on .product-row {
+        grid-template-columns: minmax(220px, 1fr) 120px 130px 110px 38px;
+      }
+      .stock-on:not(.cost-on) .thead,
+      .stock-on:not(.cost-on) .product-row {
+        grid-template-columns: minmax(240px, 1fr) 140px 110px 38px;
+      }
+      .table:not(.stock-on):not(.cost-on) .thead,
+      .table:not(.stock-on):not(.cost-on) .product-row {
+        grid-template-columns: minmax(260px, 1fr) 150px 38px;
+      }
+      .stock-value {
+        color: #d8dcdd;
+      }
+      .stock-value.unknown {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .stock-edit {
+        border: 0;
+        background: none;
+        width: 100%;
+        color: inherit;
+        text-align: right;
+        padding: 0;
+      }
+      .stock-edit:hover {
+        color: var(--accent);
+      }
+      .search-match {
+        background: #e7a53242;
+        color: #ffd77e;
+        border-radius: 3px;
+        padding: 0 1px;
+        box-shadow: inset 0 -1px #e7a53280;
+      }
+      .stock-dialog {
+        width: min(700px, calc(100% - 24px));
+      }
+      .stock-tools {
+        padding: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .stock-tools input {
+        width: 100%;
+        height: 40px;
+        border: 1px solid #343a3c;
+        border-radius: 5px;
+        background: #101213;
+        color: #fff;
+        padding: 0 10px;
+      }
+      .stock-list {
+        max-height: 55vh;
+        overflow: auto;
+      }
+      .stock-count-row {
+        display: grid;
+        grid-template-columns: 22px minmax(220px, 1fr) 130px;
+        gap: 12px;
+        align-items: center;
+        padding: 9px 16px;
+        border-top: 1px solid var(--line);
+      }
+      .stock-count-row input[type="number"] {
+        width: 100%;
+        height: 34px;
+        border: 1px solid #343a3c;
+        border-radius: 5px;
+        background: #101213;
+        color: #fff;
+        padding: 0 8px;
+      }
+      .reset-check {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        border: 1px solid #4a5153;
+        border-radius: 5px;
+        background: #111415;
+        display: grid;
+        place-items: center;
+        transition: 0.15s;
+      }
+      .reset-check:checked {
+        border-color: var(--accent);
+        background: var(--accent);
+      }
+      .reset-check:checked:after {
+        content: "✓";
+        color: #17130b;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1;
+      }
+      .reset-check:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+      }
+      .reset-check:focus-visible {
+        outline: 2px solid #e7a53255;
+        outline-offset: 2px;
+      }
+      .stock-meta {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .stock-field {
+        display: grid;
+        gap: 6px;
+      }
+      .stock-field label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .stock-field input {
+        height: 38px;
+        border: 1px solid #343a3c;
+        border-radius: 5px;
+        background: #101213;
+        color: #fff;
+        padding: 0 10px;
+      }
+      .subtle-action {
+        justify-self: start;
+        border: 0;
+        background: none;
+        color: var(--muted);
+        padding: 0;
+        font-size: 12px;
+      }
+      .subtle-action:hover {
+        color: var(--danger);
+      }
+      @media (max-width: 600px) {
+        .stock-count-row {
+          grid-template-columns: 20px 1fr 100px;
+        }
+        .stock-on.cost-on .thead,
+        .stock-on.cost-on .product-row {
+          grid-template-columns: 1fr 70px 75px 78px 30px;
+        }
+        .stock-on:not(.cost-on) .thead,
+        .stock-on:not(.cost-on) .product-row {
+          grid-template-columns: 1fr 75px 78px 30px;
+        }
+      }
+      .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 16px 0 2px;
+      }
+      .page-btn {
+        min-width: 34px;
+        height: 34px;
+        border: 1px solid #353b3d;
+        border-radius: 5px;
+        background: #181c1d;
+        color: #b9c0c2;
+        padding: 0 10px;
+      }
+      .page-btn:hover:not(:disabled):not(.active) {
+        color: var(--text);
+        border-color: #555e60;
+        background: #202526;
+      }
+      .page-btn.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #17130b;
+        font-weight: 800;
+      }
+      .page-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .page-gap {
+        color: var(--muted);
+        padding: 0 3px;
+      }
+      .cables-view {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+      }
+      .cable-toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin: 12px 0 18px;
+      }
+      .cable-toolbar .search-wrap {
+        flex: 1;
+      }
+      .cable-toolbar .search {
+        height: 44px;
+        font-size: 15px;
+      }
+      .cable-toolbar .search-wrap:before {
+        top: 8px;
+      }
+      .cable-family {
+        margin-bottom: 24px;
+      }
+      .cable-family h2 {
+        font-size: 19px;
+        margin: 0 0 8px;
+      }
+      .cable-table {
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        overflow: hidden;
+        background: var(--panel);
+      }
+      .cable-grid {
+        display: grid;
+        grid-template-columns: minmax(150px, 1fr) repeat(4, 145px);
+        align-items: center;
+      }
+      .cable-grid.show-list {
+        grid-template-columns: minmax(140px, 1fr) 150px repeat(4, 135px);
+      }
+      .cable-head {
+        min-height: 36px;
+        background: #111415;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+      .cable-head > div,
+      .cable-row > div {
+        padding: 8px 12px;
+      }
+      .cable-row {
+        min-height: 43px;
+        border-top: 1px solid #282d2f;
+        font-size: 15px;
+      }
+      .cable-row.liban {
+        background: #2a181a;
+      }
+      .cable-row.mcc {
+        background: #17222d;
+      }
+      .cable-row:hover {
+        filter: brightness(1.12);
+      }
+      .supplier-head {
+        grid-column: 1/-1;
+        padding: 8px 12px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-top: 1px solid #303638;
+      }
+      .supplier-head.liban {
+        color: #e18b8b;
+        background: #241719;
+      }
+      .supplier-head.mcc {
+        color: #85b6df;
+        background: #15212b;
+      }
+      .cable-size {
+        font-weight: 700;
+      }
+      .cable-num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-weight: 650;
+      }
+      .list-edit {
+        display: flex;
+        justify-content: flex-end;
+        gap: 5px;
+      }
+      .list-edit input {
+        width: 86px;
+        height: 30px;
+        border: 1px solid #414749;
+        border-radius: 4px;
+        background: #0f1213;
+        color: #fff;
+        text-align: right;
+        padding: 0 7px;
+      }
+      .list-save {
+        height: 30px;
+        border: 1px solid #555d60;
+        border-radius: 4px;
+        background: #252a2c;
+        color: #ddd;
+        padding: 0 8px;
+      }
+      .list-save:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      @media (max-width: 800px) {
+        .cables-view {
+          padding: 14px;
+        }
+        .cable-table {
+          overflow-x: auto;
+        }
+        .cable-grid {
+          min-width: 760px;
+        }
+        .cable-grid.show-list {
+          min-width: 900px;
+        }
+      }
+      /* Compact cable price-sheet layout */
+      .cables-view {
+        max-width: 1900px;
+        padding: 16px 18px 22px;
+      }
+      .cable-toolbar {
+        margin: 9px 0 14px;
+      }
+      .cable-families-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 15px;
+        align-items: start;
+      }
+      .cable-families-grid .cable-family {
+        margin: 0;
+        min-width: 0;
+        border-radius: 8px;
+        background: #191d1e;
+        box-shadow: 0 1px 0 #ffffff08;
+      }
+      .cable-family h2 {
+        position: relative;
+        margin: 0;
+        padding: 10px 13px 9px 19px;
+        border: 1px solid #3a4042;
+        border-bottom: 0;
+        border-radius: 8px 8px 0 0;
+        background: #202526;
+        color: #f7f8f8;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: 0.01em;
+      }
+      .cable-family h2:before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 4px;
+        border-radius: 0 3px 3px 0;
+        background: var(--accent);
+      }
+      .cable-families-grid .cable-table {
+        overflow-x: auto;
+        border-color: #3a4042;
+        border-radius: 0 0 8px 8px;
+        background: #1a1e1f;
+      }
+      .cable-families-grid .cable-grid {
+        grid-template-columns: minmax(105px, 1fr) repeat(4, minmax(82px, 1fr));
+        min-width: 470px;
+      }
+      .cable-families-grid .cable-grid.show-list {
+        grid-template-columns: minmax(105px, 1fr) 126px repeat(
+            4,
+            minmax(80px, 1fr)
+          );
+        min-width: 610px;
+      }
+      .cable-families-grid .cable-grid.meter-only {
+        grid-template-columns: minmax(145px, 1fr) repeat(2, minmax(100px, 1fr));
+        min-width: 365px;
+      }
+      .cable-families-grid .cable-grid.meter-only.show-list {
+        grid-template-columns: minmax(135px, 1fr) 126px repeat(
+            2,
+            minmax(96px, 1fr)
+          );
+        min-width: 490px;
+      }
+      .cable-head {
+        min-height: 32px;
+        background: #252a2c;
+        color: #e1e5e6;
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0.055em;
+      }
+      .cable-head > div {
+        padding: 7px 9px;
+      }
+      .cable-row {
+        min-height: 35px;
+        border-top-color: #353b3d;
+        font-size: 13px;
+        color: #e5e8e9;
+      }
+      .cable-row > div {
+        padding: 6px 9px;
+      }
+      .cable-row.liban {
+        background: #2d1d1f;
+      }
+      .cable-row.mcc {
+        background: #192733;
+      }
+      .supplier-head {
+        padding: 6px 9px;
+        border-top-color: #3d4446;
+        font-size: 11px;
+        letter-spacing: 0.075em;
+      }
+      .supplier-head.liban {
+        color: #f0a0a0;
+        background: #29191c;
+      }
+      .supplier-head.mcc {
+        color: #9bc9ec;
+        background: #172630;
+      }
+      .cable-size {
+        color: #f1f3f3;
+        font-weight: 720;
+      }
+      .cable-num {
+        color: #edf0f1;
+        font-weight: 680;
+      }
+      .cable-row > .cable-num:last-child {
+        color: #fff;
+        font-weight: 800;
+      }
+      .list-edit input {
+        height: 27px;
+      }
+      .list-save {
+        height: 27px;
+      }
+      @media (min-width: 900px) {
+        .cable-families-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .cable-family.wide {
+          grid-column: span 2;
+        }
+      }
+      @media (min-width: 1450px) {
+        .cable-families-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .cable-family.wide {
+          grid-column: span 2;
+        }
+      }
+      @media (max-width: 899px) {
+        .cable-family.wide {
+          grid-column: span 1;
+        }
+      }
+      @media (max-width: 600px) {
+        .cables-view {
+          padding: 12px;
+        }
+        .cable-families-grid {
+          gap: 12px;
+        }
+        .cable-family h2 {
+          font-size: 20px;
+        }
+      }
+      .cable-pricing-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 8px 0 10px;
+      }
+      .pricing-rule {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-height: 38px;
+        padding: 6px 10px;
+        border: 1px solid #3a4042;
+        border-radius: 6px;
+        background: #1b1f20;
+      }
+      .pricing-rule strong {
+        font-size: 11px;
+        letter-spacing: 0.055em;
+        text-transform: uppercase;
+      }
+      .pricing-rule label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #aeb6b8;
+        font-size: 12px;
+      }
+      .pricing-rule.liban strong {
+        color: #ef9b9b;
+      }
+      .pricing-rule.mcc strong {
+        color: #94c5ea;
+      }
+      .pricing-input {
+        display: flex;
+        align-items: center;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        background: #121516;
+      }
+      .pricing-input input {
+        width: 58px;
+        height: 25px;
+        border: 0;
+        background: transparent;
+        color: #fff;
+        text-align: right;
+        padding: 0 4px;
+        outline: 0;
+        font-weight: 750;
+      }
+      .pricing-input b {
+        padding-right: 6px;
+        color: #aeb6b8;
+      }
+      .pricing-input:focus-within {
+        border-color: var(--accent);
+      }
+      .pricing-input input:disabled {
+        color: #d6dbdc;
+        opacity: 1;
+      }
+      .pricing-save {
+        height: 38px;
+        margin-left: auto;
+      }
+      .cable-edit-mode.active {
+        border-color: var(--accent);
+        background: #342913;
+        color: #ffd27b;
+      }
+      .cable-families-grid {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .cable-masonry-column {
+        display: flex;
+        flex: 1 1 0;
+        min-width: 0;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .cable-family {
+        --family-accent: #e7a532;
+      }
+      .cable-family h2 {
+        border-top: 3px solid var(--family-accent);
+        background: linear-gradient(
+          90deg,
+          color-mix(in srgb, var(--family-accent) 17%, #202526),
+          #202526 48%
+        );
+        text-shadow: 0 0 18px
+          color-mix(in srgb, var(--family-accent) 35%, transparent);
+      }
+      .cable-family h2:before {
+        background: var(--family-accent);
+      }
+      .cable-head {
+        box-shadow: inset 0 2px
+          color-mix(in srgb, var(--family-accent) 45%, transparent);
+        font-size: 11.5px;
+        color: #f4f6f6;
+      }
+      .cable-row {
+        font-size: 14px;
+      }
+      .cable-size {
+        font-size: 14.5px;
+      }
+      .cable-num {
+        font-size: 14.5px;
+      }
+      .source-input {
+        width: 100%;
+        height: 27px;
+        border: 1px solid #4a5254;
+        border-radius: 4px;
+        background: #101314;
+        color: #fff;
+        padding: 0 6px;
+        outline: 0;
+      }
+      .source-input:focus {
+        border-color: var(--family-accent);
+      }
+      .source-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 7px;
+        border-top: 1px dashed #465052;
+        background: #171b1c;
+      }
+      .source-meta label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #9da6a8;
+        font-size: 10px;
+        white-space: nowrap;
+      }
+      .source-meta input,
+      .source-meta select {
+        height: 25px;
+        border: 1px solid #41494b;
+        border-radius: 4px;
+        background: #101314;
+        color: #eef1f1;
+        padding: 0 5px;
+        min-width: 0;
+      }
+      .source-meta .source-code {
+        width: 76px;
+      }
+      .source-meta .source-length {
+        width: 60px;
+      }
+      .source-save {
+        height: 25px;
+        margin-left: auto;
+        padding: 0 8px;
+        font-size: 11px;
+      }
+      .cable-editing .cable-table {
+        box-shadow: 0 0 0 1px
+          color-mix(in srgb, var(--family-accent) 42%, transparent);
+      }
+      @media (max-width: 700px) {
+        .cable-pricing-bar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+        .pricing-rule {
+          justify-content: space-between;
+          width: 100%;
+        }
+        .pricing-save {
+          width: 100%;
+          margin: 0;
+        }
+        .cable-families-grid {
+          gap: 10px;
+        }
+        .cable-masonry-column {
+          gap: 10px;
+        }
+      }
+      /* Calm two-column cable sheet */
+      .cables-view {
+        max-width: 1720px;
+      }
+      .cable-families-grid {
+        gap: 14px;
+      }
+      .cable-masonry-column {
+        gap: 14px;
+      }
+      .cable-family {
+        border: 1px solid #3d4345;
+        border-radius: 3px;
+        background: #202425;
+        box-shadow: none;
+      }
+      .cable-family h2 {
+        padding: 9px 12px;
+        border: 0;
+        border-bottom: 4px solid var(--family-accent);
+        border-radius: 0;
+        background: #292e30;
+        color: var(--family-accent);
+        font-size: 23px;
+        text-align: center;
+        text-shadow: none;
+      }
+      .cable-family h2:before {
+        display: none;
+      }
+      .cable-table {
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: #202425 !important;
+      }
+      .cable-head {
+        min-height: 34px;
+        background: #303537;
+        color: #f4f5f5;
+        font-size: 12px;
+        font-weight: 800;
+        box-shadow: none;
+      }
+      .cable-head > div {
+        padding: 7px 8px;
+      }
+      .cable-row {
+        min-height: 36px;
+        font-size: 14.5px;
+      }
+      .cable-row > div {
+        padding: 6px 8px;
+      }
+      .cable-size,
+      .cable-num {
+        font-size: 15px;
+      }
+      .cable-row.liban {
+        background: #342426;
+      }
+      .cable-row.mcc {
+        background: #202f3b;
+      }
+      .supplier-head {
+        padding: 6px 8px;
+        font-size: 11.5px;
+      }
+      .supplier-head.liban {
+        color: #f3aaaa;
+        background: #2d1d20;
+      }
+      .supplier-head.mcc {
+        color: #a8d1ef;
+        background: #1b2a35;
+      }
+      .cable-editing .cable-table {
+        box-shadow: none;
+      }
+      .cable-families-grid .cable-grid {
+        grid-template-columns: minmax(112px, 1.15fr) repeat(
+            4,
+            minmax(88px, 1fr)
+          );
+        min-width: 0;
+      }
+      .cable-families-grid .cable-grid.show-list {
+        grid-template-columns: minmax(105px, 1.1fr) minmax(92px, 0.95fr) repeat(
+            4,
+            minmax(79px, 1fr)
+          );
+        min-width: 0;
+      }
+      .cable-families-grid .cable-grid.meter-only {
+        grid-template-columns: minmax(145px, 1.3fr) repeat(
+            2,
+            minmax(105px, 1fr)
+          );
+        min-width: 0;
+      }
+      .cable-families-grid .cable-grid.meter-only.show-list {
+        grid-template-columns: minmax(130px, 1.25fr) minmax(95px, 1fr) repeat(
+            2,
+            minmax(95px, 1fr)
+          );
+        min-width: 0;
+      }
+      .cable-families-grid .cable-table {
+        overflow: visible;
+      }
+      .cable-edit-actions {
+        display: flex;
+        gap: 7px;
+      }
+      .cable-edit-actions[hidden] {
+        display: none;
+      }
+      .cable-edit-mode.active {
+        display: none;
+      }
+      .list-edit {
+        display: block;
+      }
+      .list-edit .source-input {
+        height: 28px;
+        text-align: right;
+      }
+      .pricing-rule {
+        border-radius: 4px;
+        background: #202425;
+      }
+      .pricing-save {
+        display: none !important;
+      }
+      @media (max-width: 999px) {
+        .cable-families-grid {
+          display: block;
+        }
+        .cable-masonry-column {
+          margin-bottom: 12px;
+        }
+        .cable-families-grid .cable-grid {
+          font-size: 12px;
+        }
+        .cable-head > div,
+        .cable-row > div {
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+        .cable-size,
+        .cable-num {
+          font-size: 13px;
+        }
+      }
+      @media (max-width: 560px) {
+        .cable-toolbar {
+          flex-wrap: wrap;
+        }
+        .cable-toolbar .search-wrap {
+          flex-basis: 100%;
+        }
+        .cable-families-grid .cable-grid {
+          grid-template-columns: minmax(82px, 1.1fr) repeat(
+              4,
+              minmax(56px, 1fr)
+            );
+        }
+        .cable-families-grid .cable-grid.show-list {
+          grid-template-columns: minmax(75px, 1.1fr) minmax(58px, 0.9fr) repeat(
+              4,
+              minmax(52px, 1fr)
+            );
+        }
+        .cable-head {
+          font-size: 9px;
+          letter-spacing: 0.02em;
+        }
+        .cable-size,
+        .cable-num {
+          font-size: 12px;
+        }
+      }
+      .cables-view .title-row {
+        margin-bottom: 6px;
+      }
+      .cable-toolbar {
+        justify-content: flex-end;
+        margin: 6px 0 12px;
+      }
+      .cable-family h2 {
+        padding: 10px 12px;
+        border-bottom: 1px solid #596062;
+        background: var(--family-accent);
+        color: #121617;
+        font-size: 24px;
+        font-weight: 850;
+        line-height: 1.1;
+      }
+      .cable-family {
+        border-color: #454c4e;
+      }
+      .cable-head {
+        border-bottom: 1px solid #596164;
+        background: #343a3c;
+        color: #fff;
+      }
+      .cable-row {
+        border-top: 1px solid #41484a;
+      }
+      .cable-row.liban {
+        background: #332426;
+      }
+      .cable-row.mcc {
+        background: #202e39;
+      }
+      .cable-row {
+        cursor: pointer;
+        transition:
+          background-color 0.1s,
+          color 0.1s;
+      }
+      .cable-row.focused {
+        position: relative;
+        color: #fff;
+        font-weight: 750;
+        box-shadow:
+          inset 3px 0 var(--family-accent),
+          inset 0 1px #697174,
+          inset 0 -1px #697174;
+      }
+      .cable-row.liban.focused {
+        background: #493236;
+      }
+      .cable-row.mcc.focused {
+        background: #2b4355;
+      }
+      .cable-row.focused .cable-size,
+      .cable-row.focused .cable-num {
+        font-weight: 800;
+        color: #fff;
+      }
+      .cable-size,
+      .cable-num {
+        color: #f5f6f6;
+        font-size: 15.5px;
+      }
+      .cable-row > .cable-num:last-child {
+        font-weight: 850;
+      }
+      #cables input[type="number"] {
+        appearance: textfield;
+        -moz-appearance: textfield;
+      }
+      #cables input[type="number"]::-webkit-inner-spin-button,
+      #cables input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        appearance: none;
+        margin: 0;
+        display: none;
+      }
+      .cable-pricing-bar {
+        margin-top: 4px;
+        margin-bottom: 4px;
+      }
+      @media (max-width: 999px) {
+        .cable-family h2 {
+          font-size: 22px;
+        }
+        .cable-toolbar {
+          margin-top: 4px;
+        }
+      }
+      .pos-picker-row {
+        display: flex;
+        align-items: stretch;
+        gap: 9px;
+      }
+      .pos-picker-row .search-wrap {
+        flex: 1;
+      }
+      .pos-cable-button {
+        height: 48px;
+        border-color: #8a682b;
+        background: #2d2415;
+        color: #f2bd59;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .pos-cable-button:hover {
+        border-color: var(--accent);
+        background: #392c16;
+        color: #ffd47d;
+      }
+      .cable-picker-dialog {
+        width: min(900px, calc(100% - 24px));
+      }
+      .cable-picker-body {
+        padding: 14px 16px 16px;
+      }
+      .cable-family-tabs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .cable-family-tab {
+        height: 34px;
+        border: 1px solid #3d4446;
+        border-radius: 4px;
+        background: #202425;
+        color: #d9dede;
+        padding: 0 13px;
+        font-weight: 700;
+      }
+      .cable-family-tab:hover,
+      .cable-family-tab.active {
+        border-color: var(--accent);
+        background: #342913;
+        color: #ffd27b;
+      }
+      .cable-picker-body h3 {
+        margin: 14px 0 8px;
+        text-align: center;
+        font-size: 20px;
+      }
+      .cable-supplier-picker {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        align-items: start;
+      }
+      .picker-supplier {
+        border: 1px solid #3b4244;
+        background: #1a1e1f;
+      }
+      .picker-supplier h4 {
+        margin: 0;
+        padding: 8px 10px;
+        font-size: 11px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+      .picker-supplier.liban h4 {
+        color: #f0a2a2;
+        background: #302022;
+      }
+      .picker-supplier.mcc h4 {
+        color: #9ecbef;
+        background: #1d2c38;
+      }
+      .picker-size-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1px;
+        background: #343a3c;
+      }
+      .picker-size {
+        min-height: 36px;
+        border: 0;
+        background: #202425;
+        color: #eef1f1;
+        padding: 6px 9px;
+        text-align: left;
+        font-weight: 650;
+      }
+      .picker-supplier.liban .picker-size {
+        background: #2e2022;
+      }
+      .picker-supplier.mcc .picker-size {
+        background: #1e2c37;
+      }
+      .picker-size:hover,
+      .picker-size.active {
+        color: #fff;
+        box-shadow: inset 3px 0 var(--accent);
+        filter: brightness(1.18);
+      }
+      .cable-pick-selection {
+        margin-top: 12px;
+        padding: 12px;
+        border: 1px solid #434a4c;
+        background: #1d2122;
+      }
+      .pick-summary {
+        font-weight: 750;
+        margin-bottom: 10px;
+      }
+      .pick-unit-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .pick-unit {
+        min-height: 54px;
+        border: 1px solid #434a4c;
+        border-radius: 4px;
+        background: #252a2c;
+        color: #eef1f1;
+        text-align: left;
+        padding: 7px 10px;
+      }
+      .pick-unit b {
+        display: block;
+        color: var(--accent);
+        font-size: 17px;
+        margin-top: 3px;
+      }
+      .pick-unit:hover:not(:disabled),
+      .pick-unit.active {
+        border-color: var(--accent);
+        background: #342913;
+      }
+      .pick-unit:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .pick-add-row {
+        display: flex;
+        align-items: end;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .pick-add-row label {
+        display: grid;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .pick-add-row input {
+        width: 130px;
+        height: 38px;
+        border: 1px solid #41484a;
+        border-radius: 4px;
+        background: #101314;
+        color: #fff;
+        padding: 0 9px;
+        outline: 0;
+      }
+      .pick-add-row input:focus {
+        border-color: var(--accent);
+      }
+      .pick-add-row .btn {
+        height: 38px;
+      }
+      .cable-picker-dialog input[type="number"] {
+        appearance: textfield;
+        -moz-appearance: textfield;
+      }
+      .cable-picker-dialog input[type="number"]::-webkit-inner-spin-button,
+      .cable-picker-dialog input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .cable-cart-tag {
+        color: #e4ae4c;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-left: 5px;
+      }
+      @media (max-width: 650px) {
+        .pos-picker-row {
+          flex-wrap: wrap;
+        }
+        .pos-picker-row .search-wrap {
+          flex-basis: 100%;
+        }
+        .pos-cable-button {
+          width: 100%;
+        }
+        .cable-supplier-picker {
+          grid-template-columns: 1fr;
+        }
+        .picker-size-list {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .pick-add-row {
+          align-items: stretch;
+          flex-direction: column;
+        }
+        .pick-add-row input {
+          width: 100%;
+        }
+      }
+      .last-price-update {
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .unsaved-count {
+        align-self: center;
+        color: #aeb5b7;
+        font-size: 11px;
+        min-width: 112px;
+        text-align: right;
+      }
+      .unsaved-count.has-changes {
+        color: #e8b859;
+      }
+      .field-undo {
+        width: 24px;
+        height: 24px;
+        border: 0;
+        background: transparent;
+        color: #d9aa4d;
+        padding: 0;
+        font-size: 17px;
+        line-height: 1;
+      }
+      .field-undo:hover {
+        color: #ffd477;
+      }
+      .field-undo[hidden] {
+        display: none;
+      }
+      .pricing-input.changed,
+      .list-edit.changed .source-input {
+        border-color: #b88a35 !important;
+        background: #2b2518 !important;
+        box-shadow: 0 0 0 1px #b88a3538;
+      }
+      .list-edit {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .list-edit .field-undo {
+        flex: none;
+      }
+      .cable-edit-actions {
+        align-items: center;
+      }
+      @media (max-width: 650px) {
+        .last-price-update {
+          white-space: normal;
+          text-align: right;
+        }
+        .cable-edit-actions {
+          flex-wrap: wrap;
+        }
+        .unsaved-count {
+          width: 100%;
+          text-align: left;
+        }
+      }
+      .meter-view {
+        padding: 16px 18px 24px;
+        max-width: 1500px;
+        margin: 0 auto;
+        width: 100%;
+      }
+      .meter-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0 14px;
+      }
+      .meter-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .meter-actions[hidden] {
+        display: none;
+      }
+      .meter-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        align-items: start;
+      }
+      .meter-family {
+        --meter-accent: #65d18e;
+        border: 1px solid #454c4e;
+        background: #202425;
+      }
+      .meter-family-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 11px;
+        background: var(--meter-accent);
+        color: #111617;
+      }
+      .meter-family-head h2 {
+        margin: 0;
+        flex: 1;
+        font-size: 20px;
+        text-align: center;
+      }
+      .meter-family-head input {
+        flex: 1;
+        min-width: 0;
+        height: 32px;
+        border: 1px solid #1117;
+        border-radius: 4px;
+        background: #111c;
+        color: #fff;
+        padding: 0 8px;
+        font-weight: 750;
+      }
+      .meter-delete,
+      .meter-item-delete {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font-weight: 800;
+      }
+      .meter-table-head,
+      .meter-row {
+        display: grid;
+        grid-template-columns: minmax(140px, 1fr) 110px 120px 32px;
+        align-items: center;
+      }
+      .meter-table-head {
+        min-height: 34px;
+        background: #343a3c;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.055em;
+      }
+      .meter-table-head > div,
+      .meter-row > div {
+        padding: 7px 9px;
+      }
+      .meter-row {
+        min-height: 40px;
+        border-top: 1px solid #41484a;
+        color: #f5f6f6;
+      }
+      .meter-row:nth-child(odd) {
+        background: #1c2021;
+      }
+      .meter-number {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+      }
+      .meter-row input {
+        width: 100%;
+        height: 29px;
+        border: 1px solid #4b5355;
+        border-radius: 4px;
+        background: #101314;
+        color: #fff;
+        padding: 0 7px;
+        outline: 0;
+      }
+      .meter-row input:focus {
+        border-color: var(--meter-accent);
+      }
+      .meter-row input[data-meter-cost],
+      .meter-row input[data-meter-price] {
+        text-align: right;
+      }
+      .meter-add-product {
+        width: 100%;
+        height: 36px;
+        border: 0;
+        border-top: 1px solid #41484a;
+        background: #24292a;
+        color: var(--meter-accent);
+        font-weight: 750;
+      }
+      .meter-empty {
+        padding: 18px;
+        text-align: center;
+        color: var(--muted);
+      }
+      #meterItems input[type="number"],
+      .meter-dialog input[type="number"] {
+        appearance: textfield;
+        -moz-appearance: textfield;
+      }
+      #meterItems input[type="number"]::-webkit-inner-spin-button,
+      #meterItems input[type="number"]::-webkit-outer-spin-button,
+      .meter-dialog input[type="number"]::-webkit-inner-spin-button,
+      .meter-dialog input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        appearance: none;
+        margin: 0;
+        display: none;
+      }
+      .meter-pos-button {
+        height: 48px;
+        border-color: #38705a;
+        background: #152a22;
+        color: #79d5ad;
+        font-weight: 800;
+      }
+      .meter-result-family {
+        display: block;
+        color: #79d5ad;
+        font-size: 11px;
+        margin-top: 3px;
+      }
+      .meter-cart-tag {
+        color: #79d5ad;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        margin-left: 5px;
+      }
+      @media (max-width: 850px) {
+        .meter-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 560px) {
+        .meter-view {
+          padding: 12px;
+        }
+        .meter-table-head,
+        .meter-row {
+          grid-template-columns: minmax(105px, 1fr) 78px 82px 28px;
+        }
+        .meter-table-head > div,
+        .meter-row > div {
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+        .nav button {
+          padding: 0 7px;
+          font-size: 12px;
+        }
+      }
+      .meter-row > div:first-child {
+        font-size: 15.5px;
+        font-weight: 750;
+      }
+      .meter-last-update {
+        font-size: 11px;
+        white-space: nowrap;
+      }
+    </style>
+    <link rel="stylesheet" href="/purchases.css" />
+    <link rel="stylesheet" href="/pos-v1.css" />
+    <link rel="stylesheet" href="/pos-v2.css" />
+    <link rel="stylesheet" href="/pos-cleanup.css" />
+    <link rel="stylesheet" href="/pos-clarity.css" />
+    <link rel="stylesheet" href="/pos-final.css" />
+    <link rel="stylesheet" href="/pos-v3.css" />
+    <link rel="stylesheet" href="/pos-v4.css" />
+    <link rel="stylesheet" href="/pos-v5.css" />
+    <link rel="stylesheet" href="/pos-targeted-fixes.css" />
+    <link rel="stylesheet" href="/clients.css" />
+    <link rel="stylesheet" href="/clients-v2.css" />
+    <link rel="stylesheet" href="/clients-v3.css" />
+    <link rel="stylesheet" href="/ali-baba.css" />
+    <link rel="stylesheet" href="/ali-baba-v2.css" />
+    <link rel="stylesheet" href="/cash-settings.css" />
+    <link rel="stylesheet" href="income-settings-v2.css" />
+    <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="orders.css" />
+    <link rel="stylesheet" href="branding.css" />
+    <link rel="stylesheet" href="themes.css" />
+    <link rel="stylesheet" href="auth.css" />
+    <link rel="stylesheet" href="utilities.css" />
+    <script defer src="/dashboard.js"></script>
+    <script defer src="/themes.js"></script>
+  </head>
+  <body>
+    <section id="authScreen" class="auth-screen" aria-label="Dakkak Electric login">
+      <div class="auth-card">
+        <img class="auth-logo" src="/assets/dakkak-logo-refined.png" alt="Dakkak Electric" />
+        <h1>Welcome Back</h1>
+        <p>Sign in to continue to Dakkak Electric</p>
+        <form id="loginForm" class="auth-form">
+          <label>Username<input name="username" required autocomplete="username" /></label>
+          <label class="auth-password">Password<input name="password" type="password" required autocomplete="current-password" /><button type="button" id="toggleLoginPassword">Show</button></label>
+          <div id="loginError" class="auth-error" role="alert"></div>
+          <button class="auth-submit" type="submit">LOGIN</button>
+        </form>
+      </div>
+    </section>
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand brand-home" aria-label="Dakkak Electric">
+          <img src="/assets/dakkak-logo-refined.png" alt="Dakkak Electric" />
+        </div>
+        <nav class="nav">
+          <button data-view="products" class="active">Products</button
+          ><button data-view="cables">Cables</button
+          ><button data-view="meterItems">By Meter</button
+          ><button data-view="pos" class="pos-action">Open POS</button>
+        </nav>
+        <div class="clock" id="clock"></div>
+      </header>
+      <main id="pos" class="view pos-view">
+        <section class="catalog">
+          <div class="title-row">
+            <h1>New sale</h1>
+            <small>Search and click to add</small>
+          </div>
+          <div class="pos-picker-row">
+            <div class="search-wrap">
+              <input
+                id="posSearch"
+                class="search"
+                placeholder="Search products..."
+                autofocus
+                autocomplete="off"
+              /><span class="key">F2</span>
+            </div>
+            <button class="btn pos-cable-button" id="openCablePicker">
+              + CABLE
+            </button>
+          </div>
+          <div class="result-label">
+            <span>Products</span><span id="resultCount"></span>
+          </div>
+          <div id="posResults" class="results">
+            <div class="empty">Start typing a product name</div>
+          </div>
+        </section>
+        <aside class="cart">
+          <div class="cart-head">
+            <h2>
+              Current sale <span class="hint" id="cartCount">(0 items)</span>
+            </h2>
+            <button class="clear" id="clearCart">Clear</button>
+          </div>
+          <div id="cartItems" class="cart-items"></div>
+          <div class="total">
+            <div class="total-line">
+              <span>Total</span><b id="cartTotal">$0.00</b>
+            </div>
+            <button class="checkout" disabled>Save sale — coming later</button>
+          </div>
+        </aside>
+      </main>
+      <main id="products" class="view products-view active">
+        <div class="products-sticky">
+          <div class="title-row">
+            <div>
+              <h1>Products</h1>
+              <small>Fast shop price book — click a row to edit</small>
+            </div>
+          </div>
+          <div class="product-toolbar">
+            <div class="search-wrap">
+              <input
+                id="productSearch"
+                class="search"
+                placeholder="Search products..."
+                autocomplete="off"
+              />
+            </div>
+            <button class="add" id="addProduct">+ New product</button
+            ><button class="btn import" id="importProduct">
+              Import Products</button
+            ><button
+              class="btn gear"
+              id="productSettings"
+              title="Product settings"
+              aria-label="Product settings"
+            >
+              ⚙</button
+            ><span class="count-block"
+              ><b class="count" id="productCount">Loading...</b
+              ><small class="shown" id="shownCount"></small
+            ></span>
+          </div>
+        </div>
+        <div class="table cost-on" id="productTable">
+          <div class="thead" id="productHead">
+            <div>Product</div>
+            <div class="num">Cost</div>
+            <div class="num">Selling</div>
+            <div></div>
+          </div>
+          <div id="productRows"></div>
+        </div>
+        <div class="pagination" id="productPagination" hidden></div>
+      </main>
+      <main id="cables" class="view cables-view">
+        <div class="title-row">
+          <div>
+            <h1>Cables</h1>
+            <small>Supplier cable price book</small>
+          </div>
+          <small class="last-price-update" id="lastCablePriceUpdate"
+            >Last price update: Not yet</small
+          >
+        </div>
+        <div class="cable-pricing-bar">
+          <div class="pricing-rule liban">
+            <strong>Liban Cables</strong
+            ><label
+              >Discount
+              <span class="pricing-input"
+                ><input
+                  id="libanDiscount"
+                  type="number"
+                  min="0"
+                  max="99.99"
+                  step="0.01"
+                  disabled
+                /><b>%</b></span
+              ><button
+                class="field-undo"
+                data-undo-rule="libanDiscount"
+                title="Restore original discount"
+                hidden
+              >
+                ↶
+              </button></label
+            >
+          </div>
+          <div class="pricing-rule mcc">
+            <strong>MCC</strong
+            ><label
+              >Adjustment
+              <span class="pricing-input"
+                ><input
+                  id="mccAdjustment"
+                  type="number"
+                  min="-99.99"
+                  step="0.01"
+                  disabled
+                /><b>%</b></span
+              ><button
+                class="field-undo"
+                data-undo-rule="mccAdjustment"
+                title="Restore original adjustment"
+                hidden
+              >
+                ↶
+              </button></label
+            >
+          </div>
+          <button class="btn save pricing-save" id="saveCableRules" hidden>
+            Save Pricing
+          </button>
+        </div>
+        <div class="cable-toolbar">
+          <input id="cableSearch" type="hidden" value="" /><button
+            class="btn cable-edit-mode"
+            id="cableEditMode"
+          >
+            Edit
+          </button>
+          <div class="cable-edit-actions" id="cableEditActions" hidden>
+            <span class="unsaved-count" id="cableUnsaved"
+              >No unsaved changes</span
+            ><button class="btn" id="cancelCableEdit">Cancel Editing</button
+            ><button class="btn save" id="saveCableChanges">
+              Save Changes
+            </button>
+          </div>
+          <button
+            class="btn gear"
+            id="cableSettings"
+            title="Cable settings"
+            aria-label="Cable settings"
+          >
+            ⚙
+          </button>
+        </div>
+        <div id="cableFamilies" class="cable-families-grid"></div>
+      </main>
+      <main id="meterItems" class="view meter-view">
+        <div class="title-row">
+          <div>
+            <h1>By Meter</h1>
+            <small>Simple meter-only price sheet</small>
+          </div>
+        </div>
+        <div class="meter-toolbar">
+          <button class="btn" id="addMeterFamily">+ Add Family</button
+          ><button class="btn" id="editMeterItems">Edit</button>
+          <div class="meter-actions" id="meterEditActions" hidden>
+            <button class="btn" id="cancelMeterEdit">Cancel Editing</button
+            ><button class="btn save" id="saveMeterChanges">
+              Save Changes
+            </button>
+          </div>
+        </div>
+        <div class="meter-grid" id="meterFamilies"></div>
+      </main>
+    </div>
+    <dialog id="settingsDialog">
+      <div class="modal-head">
+        <h2>Product Options</h2>
+        <button type="button" class="x" id="closeSettings">×</button>
+      </div>
+      <div class="settings-body">
+        <div class="setting-row">
+          <strong>Stock Tracking</strong
+          ><label class="toggle"
+            ><input type="checkbox" id="stockToggle" /><span
+              class="toggle-track"
+            ></span
+          ></label>
+        </div>
+        <button type="button" class="btn opening-link" id="openingStock" hidden>
+          Opening Stock Count →
+        </button>
+        <div class="setting-row">
+          <strong>Show Cost Price</strong
+          ><label class="toggle"
+            ><input type="checkbox" id="costToggle" /><span
+              class="toggle-track"
+            ></span
+          ></label>
+        </div>
+        <div class="setting-row">
+          <strong>Products Per Page</strong
+          ><select class="select-setting" id="productsPerPage">
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span></span>
+        <div class="right">
+          <button type="button" class="btn" id="cancelSettings">Cancel</button
+          ><button type="button" class="btn save" id="saveSettings">
+            Save
+          </button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="stockDialog" class="stock-dialog">
+      <div class="modal-head">
+        <h2>Opening Stock Count</h2>
+        <button type="button" class="x" id="closeStock">×</button>
+      </div>
+      <div class="stock-tools">
+        <input
+          id="stockSearch"
+          placeholder="Search products..."
+          autocomplete="off"
+        />
+      </div>
+      <div id="stockRows" class="stock-list"></div>
+      <div class="modal-foot">
+        <button type="button" class="btn delete" id="resetStock">
+          Reset Count
+        </button>
+        <div class="right">
+          <button type="button" class="btn" id="cancelStock">Cancel</button
+          ><button type="button" class="btn save" id="saveOpeningStock">
+            Save Opening Stock
+          </button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="importDialog" class="import-dialog">
+      <div class="modal-head">
+        <h2>Import Products</h2>
+        <button type="button" class="x" id="closeImport">×</button>
+      </div>
+      <div class="import-body">
+        <div id="importSetup">
+          <div class="file-row">
+            <label class="btn" for="csvFile">Choose CSV File</label
+            ><input id="csvFile" type="file" accept=".csv,text/csv" /><span
+              id="fileName"
+              class="hint"
+              >No file selected</span
+            ><button type="button" class="link-btn" id="sampleCsv">
+              Download Sample CSV
+            </button>
+          </div>
+          <div id="importPreview"></div>
+        </div>
+        <div id="importResult" class="import-result" hidden></div>
+      </div>
+      <div class="modal-foot">
+        <span></span>
+        <div class="right">
+          <button type="button" class="btn" id="cancelImport">Cancel</button
+          ><button type="button" class="btn save" id="confirmImport" disabled>
+            Import Products
+          </button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="cableSettingsDialog">
+      <div class="modal-head">
+        <h2>Cable Options</h2>
+        <button type="button" class="x" id="closeCableSettings">×</button>
+      </div>
+      <div class="settings-body">
+        <div class="setting-row">
+          <strong>Show List Prices</strong
+          ><label class="toggle"
+            ><input type="checkbox" id="listPriceToggle" /><span
+              class="toggle-track"
+            ></span
+          ></label>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span></span>
+        <div class="right">
+          <button type="button" class="btn" id="cancelCableSettings">
+            Cancel</button
+          ><button type="button" class="btn save" id="saveCableSettings">
+            Save
+          </button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="cablePickerDialog" class="cable-picker-dialog">
+      <div class="modal-head">
+        <div>
+          <h2>Cable Quick Picker</h2>
+          <small>Choose family, supplier, size, and sale unit</small>
+        </div>
+        <button type="button" class="x" id="closeCablePicker">×</button>
+      </div>
+      <div class="cable-picker-body">
+        <div class="cable-family-tabs" id="cablePickerFamilies"></div>
+        <h3 id="cablePickerTitle" dir="auto"></h3>
+        <div class="cable-supplier-picker" id="cableSupplierPicker"></div>
+        <div class="cable-pick-selection" id="cablePickSelection" hidden></div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn" id="cancelCablePicker">Cancel</button
+        ><span></span>
+      </div>
+    </dialog>
+    <dialog id="confirmDialog">
+      <div class="modal-head">
+        <h2 id="confirmTitle">Confirm action</h2>
+        <button type="button" class="x" id="closeConfirm">×</button>
+      </div>
+      <div class="import-body" id="confirmMessage"></div>
+      <div class="modal-foot">
+        <span></span>
+        <div class="right">
+          <button type="button" class="btn" id="cancelConfirm">Cancel</button
+          ><button type="button" class="btn delete" id="acceptConfirm">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="editDialog">
+      <form id="editForm">
+        <div class="modal-head">
+          <h2 id="modalTitle">Edit product</h2>
+          <button type="button" class="x" id="closeModal">×</button>
+        </div>
+        <div class="form">
+          <label class="wide"
+            >Product name<input name="name_en" required /></label
+          ><label
+            >Cost price<input
+              name="cost_price"
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              required /></label
+          ><label
+            >Selling price<input
+              name="selling_price"
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              required
+          /></label>
+          <div class="stock-field wide" id="editStockField" hidden>
+            <label
+              >Stock<input
+                id="editStock"
+                name="stock_quantity"
+                type="number"
+                min="0"
+                step="any"
+                inputmode="decimal"
+                placeholder="Not counted" /></label
+            ><button type="button" class="subtle-action" id="resetEditStock">
+              Reset to Not Counted
+            </button>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="delete-product" id="deleteProduct">
+            Delete Product
+          </button>
+          <div class="right">
+            <button type="button" class="btn" id="cancelModal">Cancel</button
+            ><button class="btn save">Save</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+    <div class="toast" id="toast"></div>
+    <dialog id="meterFamilyDialog" class="meter-dialog">
+      <form id="meterFamilyForm">
+        <div class="modal-head">
+          <h2>Add Family</h2>
+          <button type="button" class="x" data-close-meter-family>×</button>
+        </div>
+        <div class="form">
+          <label class="wide"
+            >Family Name<input
+              name="name"
+              required
+              autocomplete="off"
+              placeholder="Neon Flex"
+          /></label>
+        </div>
+        <div class="modal-foot">
+          <span></span>
+          <div class="right">
+            <button type="button" class="btn" data-close-meter-family>
+              Cancel</button
+            ><button class="btn save">Create Family</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="meterProductDialog" class="meter-dialog">
+      <form id="meterProductForm">
+        <div class="modal-head">
+          <h2>Add Product</h2>
+          <button type="button" class="x" data-close-meter-product>×</button>
+        </div>
+        <div class="form">
+          <label class="wide"
+            >Product Name<input
+              name="name"
+              required
+              autocomplete="off"
+              placeholder="Strip LED COB 24V" /></label
+          ><label
+            >Cost / 1m<input
+              name="costPerMeter"
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              required /></label
+          ><label
+            >Price / 1m<input
+              name="sellingPricePerMeter"
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              required
+          /></label>
+        </div>
+        <div class="modal-foot">
+          <span></span>
+          <div class="right">
+            <button type="button" class="btn" data-close-meter-product>
+              Cancel</button
+            ><button class="btn save">Add Product</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+    <script src="/auth.js"></script>
+    <script>
+      const $ = (s) => document.querySelector(s);
+      const state = {
+        pos: [],
+        products: [],
+        cart: new Map(),
+        editing: null,
+        timer: null,
+        stockEnabled: false,
+        settings: null,
+        stockSession: new Map(),
+        resetSelection: new Set(),
+        productPage: 1,
+        cables: [],
+        showListPrices: false,
+      };
+      const money = (n) =>
+        new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(Number(n) || 0);
+      const esc = (v) =>
+        String(v ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      const highlight = (value, query) => {
+        const text = String(value ?? ""),
+          term = String(query ?? "");
+        if (!term) return esc(text);
+        const literal = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+          parts = text.split(new RegExp(`(${literal})`, "giu"));
+        return parts
+          .map((part, index) =>
+            index % 2
+              ? `<mark class="search-match">${esc(part)}</mark>`
+              : esc(part),
+          )
+          .join("");
+      };
+      async function api(url, o) {
+        await window.authReady;
+        const r = await fetch(url, o);
+        if (!r.ok) {
+          const b = await r.json().catch(() => ({}));
+          if (r.status === 401) window.showAuthLogin?.();
+          throw Error(b.error || "Request failed");
+        }
+        return r.status === 204 ? null : r.json();
+      }
+      function toast(m, error = false) {
+        const e = $("#toast");
+        e.textContent = m;
+        e.className = "toast show" + (error ? " error" : "");
+        clearTimeout(state.timer);
+        state.timer = setTimeout(() => (e.className = "toast"), 2200);
+      }
+      let confirmationResolve = null;
+      function finishConfirmation(result) {
+        if (!confirmationResolve) return;
+        const resolve = confirmationResolve;
+        confirmationResolve = null;
+        $("#confirmDialog").close();
+        resolve(result);
+      }
+      function appConfirm({ title, message, action = "Confirm" }) {
+        $("#confirmTitle").textContent = title;
+        $("#confirmMessage").textContent = message;
+        $("#acceptConfirm").textContent = action;
+        $("#confirmDialog").showModal();
+        return new Promise((resolve) => (confirmationResolve = resolve));
+      }
+      $("#acceptConfirm").onclick = () => finishConfirmation(true);
+      $("#cancelConfirm").onclick = $("#closeConfirm").onclick = () =>
+        finishConfirmation(false);
+      $("#confirmDialog").addEventListener("cancel", (e) => {
+        e.preventDefault();
+        finishConfirmation(false);
+      });
+      document.querySelectorAll("[data-view]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            document
+              .querySelectorAll("[data-view],.view")
+              .forEach((x) => x.classList.remove("active"));
+            b.classList.add("active");
+            $("#" + b.dataset.view).classList.add("active");
+            if (b.dataset.view === "pos") $("#posSearch").focus();
+            else if (b.dataset.view === "cables") {
+              loadCables();
+              $("#cableSearch").focus();
+            } else loadProducts();
+          }),
+      );
+      function updateClock() {
+        const d = new Date();
+        $("#clock").textContent = d.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+      updateClock();
+      setInterval(updateClock, 30000);
+      async function loadCables() {
+        try {
+          const q = $("#cableSearch").value.trim(),
+            [entries, settings] = await Promise.all([
+              api("/api/cables?search=" + encodeURIComponent(q)),
+              api("/api/cable-settings"),
+            ]);
+          state.cables = entries;
+          state.showListPrices = settings.showListPrices;
+          const families = new Map();
+          entries.forEach((entry) => {
+            if (!families.has(entry.family_id))
+              families.set(entry.family_id, {
+                name: entry.family_name,
+                entries: [],
+              });
+            families.get(entry.family_id).entries.push(entry);
+          });
+          $("#cableFamilies").innerHTML = families.size
+            ? [...families.values()]
+                .map((family) => {
+                  let supplier = "";
+                  const rows = family.entries
+                    .map((entry) => {
+                      let head = "";
+                      if (entry.supplier !== supplier) {
+                        supplier = entry.supplier;
+                        head = `<div class="supplier-head ${supplier === "Liban Cables" ? "liban" : "mcc"}">${esc(supplier)}</div>`;
+                      }
+                      const tone =
+                          entry.supplier === "Liban Cables" ? "liban" : "mcc",
+                        size =
+                          entry.size +
+                          (entry.variant ? ` (${entry.variant})` : "");
+                      return (
+                        head +
+                        `<div class="cable-grid cable-row ${tone} ${settings.showListPrices ? "show-list" : ""}"><div class="cable-size">${highlight(size, q)}</div>${settings.showListPrices ? `<div class="list-edit"><input type="number" min="0" step="0.01" value="${Number(entry.list_price).toFixed(2)}" data-list-price="${entry.id}"><button class="list-save" data-save-list="${entry.id}">Save</button></div>` : ""}<div class="cable-num">${money(entry.roll_cost)}</div><div class="cable-num">${money(entry.roll_price)}</div><div class="cable-num">${money(entry.meter_cost)}</div><div class="cable-num">${money(entry.meter_price)}</div></div>`
+                      );
+                    })
+                    .join("");
+                  return `<section class="cable-family"><h2 dir="auto">${highlight(family.name, q)}</h2><div class="cable-table"><div class="cable-grid cable-head ${settings.showListPrices ? "show-list" : ""}"><div>Size</div>${settings.showListPrices ? '<div class="cable-num">List Price</div>' : ""}<div class="cable-num">Cost اللفة</div><div class="cable-num">Price اللفة</div><div class="cable-num">Cost 1 متر</div><div class="cable-num">Price 1 متر</div></div>${rows}</div></section>`;
+                })
+                .join("")
+            : '<div class="empty">No cables found</div>';
+        } catch (e) {
+          toast(e.message, true);
+        }
+      }
+      let cableDelay;
+      $("#cableSearch").oninput = () => {
+        clearTimeout(cableDelay);
+        cableDelay = setTimeout(loadCables, 100);
+      };
+      $("#cableFamilies").onclick = async (e) => {
+        const button = e.target.closest("[data-save-list]");
+        if (!button) return;
+        const id = button.dataset.saveList,
+          input = document.querySelector(`[data-list-price="${id}"]`);
+        try {
+          button.disabled = true;
+          await api("/api/cables/" + id, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ listPrice: input.value }),
+          });
+          toast("List Price updated");
+          loadCables();
+        } catch (x) {
+          toast(x.message, true);
+          button.disabled = false;
+        }
+      };
+      $("#cableSettings").onclick = async () => {
+        try {
+          const settings = await api("/api/cable-settings");
+          $("#listPriceToggle").checked = settings.showListPrices;
+          $("#cableSettingsDialog").showModal();
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      $("#closeCableSettings").onclick = $("#cancelCableSettings").onclick =
+        () => $("#cableSettingsDialog").close();
+      $("#saveCableSettings").onclick = async () => {
+        try {
+          await api("/api/cable-settings", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              showListPrices: $("#listPriceToggle").checked,
+            }),
+          });
+          $("#cableSettingsDialog").close();
+          toast("Cable settings saved");
+          loadCables();
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      async function searchPOS() {
+        const q = $("#posSearch").value.trim();
+        if (!q) {
+          state.pos = [];
+          $("#resultCount").textContent = "";
+          $("#posResults").innerHTML =
+            '<div class="empty">Start typing a product name</div>';
+          return;
+        }
+        try {
+          state.pos = await api(
+            "/api/products?search=" + encodeURIComponent(q) + "&limit=50",
+          );
+          $("#resultCount").textContent = state.pos.length + " found";
+          $("#posResults").innerHTML = state.pos.length
+            ? state.pos
+                .map(
+                  (p, i) =>
+                    `<button class="result ${i === 0 ? "selected" : ""}" data-add="${p.id}"><span><span class="result-name">${esc(p.name_en)}</span><span class="result-cost">Cost ${money(p.cost_price)}</span></span><span class="result-price">${money(p.selling_price)}</span></button>`,
+                )
+                .join("")
+            : '<div class="empty">No products found</div>';
+        } catch (e) {
+          toast(e.message, true);
+        }
+      }
+      $("#posResults").onclick = (e) => {
+        const row = e.target.closest("[data-add]");
+        if (row) addToCart(Number(row.dataset.add));
+      };
+      function addToCart(id) {
+        const p = state.pos.find((x) => x.id === id),
+          item = state.cart.get(id);
+        state.cart.set(id, {
+          ...p,
+          cartKey: id,
+          source_type: "product",
+          source_id: p.id,
+          description_at_sale: p.name_en,
+          sale_unit: p.unit || "piece",
+          cost_price_at_sale: Number(p.cost_price),
+          selling_price_at_sale: Number(p.selling_price),
+          qty: item ? item.qty + 1 : 1,
+        });
+        renderCart();
+        toast(p.name_en + " added");
+      }
+      function renderCart() {
+        const items = [...state.cart.values()],
+          count = items.reduce((n, x) => n + x.qty, 0),
+          total = items.reduce(
+            (n, x) => n + x.qty * x.selling_price_at_sale,
+            0,
+          );
+        $("#cartCount").textContent =
+          `(${Number(count.toFixed(3))} item${count === 1 ? "" : "s"})`;
+        $("#cartTotal").textContent = money(total);
+        $("#cartItems").innerHTML = items.length
+          ? items
+              .map((x) => {
+                const key = esc(String(x.cartKey)),
+                  quantity = Number(x.qty.toFixed(3)),
+                  unit =
+                    x.source_type === "cable"
+                      ? x.sale_unit === "meter"
+                        ? "m"
+                        : "roll"
+                      : "each";
+                return `<div class="cart-row"><div><strong>${esc(x.description_at_sale)}${x.source_type === "cable" ? '<span class="cable-cart-tag">Cable</span>' : ""}</strong><div class="cart-meta"><div class="qty"><button data-cart-key="${key}" data-cart-action="minus">−</button><span>${quantity}</span><button data-cart-key="${key}" data-cart-action="plus">+</button></div><span>${money(x.selling_price_at_sale)} / ${unit}</span><button class="remove" data-cart-key="${key}" data-cart-action="remove">Remove</button></div></div><div class="cart-price">${money(x.qty * x.selling_price_at_sale)}</div></div>`;
+              })
+              .join("")
+          : '<div class="cart-empty"><div><b>No products in this sale</b><br>Search and click a product to add it</div></div>';
+      }
+      $("#cartItems").onclick = (e) => {
+        const control = e.target.closest("[data-cart-key]");
+        if (!control) return;
+        const raw = control.dataset.cartKey,
+          key = raw.startsWith("cable:") ? raw : Number(raw),
+          x = state.cart.get(key);
+        if (!x) return;
+        if (control.dataset.cartAction === "plus") x.qty++;
+        if (control.dataset.cartAction === "minus") {
+          x.qty--;
+          if (x.qty <= 0) state.cart.delete(key);
+        }
+        if (control.dataset.cartAction === "remove") state.cart.delete(key);
+        renderCart();
+      };
+      $("#clearCart").onclick = () => {
+        state.cart.clear();
+        renderCart();
+      };
+      let posDelay;
+      $("#posSearch").oninput = () => {
+        clearTimeout(posDelay);
+        posDelay = setTimeout(searchPOS, 100);
+      };
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "F2") {
+          e.preventDefault();
+          document.querySelector('[data-view="pos"]').click();
+        }
+        if (
+          e.key === "Enter" &&
+          document.activeElement === $("#posSearch") &&
+          state.pos[0]
+        ) {
+          e.preventDefault();
+          addToCart(state.pos[0].id);
+        }
+      });
+      state.cablePickerEntries = [];
+      state.cablePickerFamily = null;
+      state.cablePickerEntry = null;
+      state.cablePickerUnit = null;
+      state.cablePickerMore = false;
+      function cablePickerFamilies() {
+        const families = new Map();
+        state.cablePickerEntries.forEach((entry) => {
+          if (!families.has(entry.family_id))
+            families.set(entry.family_id, {
+              id: entry.family_id,
+              name: entry.family_name,
+            });
+        });
+        return [...families.values()];
+      }
+      function renderCablePickerTabs() {
+        const families = cablePickerFamilies(),
+          visible = state.cablePickerMore ? families : families.slice(0, 5);
+        $("#cablePickerFamilies").innerHTML =
+          visible
+            .map(
+              (family) =>
+                `<button class="cable-family-tab ${family.id === state.cablePickerFamily ? "active" : ""}" data-picker-family="${family.id}" dir="auto">${esc(family.name)}</button>`,
+            )
+            .join("") +
+          (families.length > 5
+            ? `<button class="cable-family-tab ${state.cablePickerMore ? "active" : ""}" data-picker-more>${state.cablePickerMore ? "Priority" : "More"}</button>`
+            : "");
+      }
+      function renderCablePickerFamily() {
+        const entries = state.cablePickerEntries.filter(
+            (entry) => entry.family_id === state.cablePickerFamily,
+          ),
+          family = cablePickerFamilies().find(
+            (item) => item.id === state.cablePickerFamily,
+          );
+        $("#cablePickerTitle").textContent = family?.name || "";
+        const suppliers = ["Liban Cables", "MCC"]
+          .map((supplier) => {
+            const rows = entries.filter((entry) => entry.supplier === supplier);
+            if (!rows.length) return "";
+            const tone = supplier === "Liban Cables" ? "liban" : "mcc";
+            return `<section class="picker-supplier ${tone}"><h4>${esc(supplier)}</h4><div class="picker-size-list">${rows
+              .map((entry) => {
+                const size =
+                  entry.size + (entry.variant ? ` (${entry.variant})` : "");
+                return `<button class="picker-size ${state.cablePickerEntry?.id === entry.id ? "active" : ""}" data-picker-entry="${entry.id}" dir="auto">${esc(size)}</button>`;
+              })
+              .join("")}</div></section>`;
+          })
+          .join("");
+        $("#cableSupplierPicker").innerHTML =
+          suppliers || '<div class="empty">No cable sizes available</div>';
+        renderCablePickSelection();
+      }
+      function renderCablePickSelection() {
+        const panel = $("#cablePickSelection"),
+          entry = state.cablePickerEntry;
+        if (!entry) {
+          panel.hidden = true;
+          panel.innerHTML = "";
+          return;
+        }
+        const size = entry.size + (entry.variant ? ` (${entry.variant})` : ""),
+          meterAvailable =
+            entry.meter_price !== null && entry.meter_price !== undefined,
+          rollAvailable =
+            entry.roll_price !== null && entry.roll_price !== undefined;
+        panel.hidden = false;
+        panel.innerHTML = `<div class="pick-summary" dir="auto">${esc(entry.family_name)} • ${esc(entry.supplier)} • ${esc(size)}</div><div class="pick-unit-row"><button class="pick-unit ${state.cablePickerUnit === "meter" ? "active" : ""}" data-picker-unit="meter" ${meterAvailable ? "" : "disabled"}>METER<b>${meterAvailable ? money(entry.meter_price) + " / m" : "Unavailable"}</b></button><button class="pick-unit ${state.cablePickerUnit === "roll" ? "active" : ""}" data-picker-unit="roll" ${rollAvailable ? "" : "disabled"}>ROLL<b>${rollAvailable ? money(entry.roll_price) + " / roll" : "Unavailable"}</b></button></div><div class="pick-add-row"><label>Quantity<input id="cablePickQuantity" type="number" min="${state.cablePickerUnit === "roll" ? "1" : "0.01"}" step="${state.cablePickerUnit === "roll" ? "1" : "0.01"}" inputmode="decimal" value="1" ${state.cablePickerUnit ? "" : "disabled"}></label><button class="btn save" id="addCableToOrder" ${state.cablePickerUnit ? "" : "disabled"}>ADD TO ORDER</button></div>`;
+      }
+      function closeCablePicker() {
+        state.cablePickerEntry = null;
+        state.cablePickerUnit = null;
+        $("#cablePickerDialog").close();
+      }
+      $("#openCablePicker").onclick = async () => {
+        try {
+          state.cablePickerEntries = await api("/api/cables");
+          const families = cablePickerFamilies();
+          if (!families.length) throw new Error("No cables are available");
+          state.cablePickerFamily = families[0].id;
+          state.cablePickerEntry = null;
+          state.cablePickerUnit = null;
+          state.cablePickerMore = false;
+          renderCablePickerTabs();
+          renderCablePickerFamily();
+          $("#cablePickerDialog").showModal();
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      $("#closeCablePicker").onclick = $("#cancelCablePicker").onclick =
+        closeCablePicker;
+      $("#cablePickerFamilies").onclick = (e) => {
+        const more = e.target.closest("[data-picker-more]"),
+          family = e.target.closest("[data-picker-family]");
+        if (more) {
+          state.cablePickerMore = !state.cablePickerMore;
+          renderCablePickerTabs();
+          return;
+        }
+        if (!family) return;
+        state.cablePickerFamily = Number(family.dataset.pickerFamily);
+        state.cablePickerEntry = null;
+        state.cablePickerUnit = null;
+        renderCablePickerTabs();
+        renderCablePickerFamily();
+      };
+      $("#cableSupplierPicker").onclick = (e) => {
+        const button = e.target.closest("[data-picker-entry]");
+        if (!button) return;
+        state.cablePickerEntry = state.cablePickerEntries.find(
+          (entry) => entry.id === Number(button.dataset.pickerEntry),
+        );
+        state.cablePickerUnit = null;
+        renderCablePickerFamily();
+      };
+      $("#cablePickSelection").onclick = (e) => {
+        const unit = e.target.closest("[data-picker-unit]");
+        if (unit && !unit.disabled) {
+          state.cablePickerUnit = unit.dataset.pickerUnit;
+          renderCablePickSelection();
+          return;
+        }
+        const add = e.target.closest("#addCableToOrder");
+        if (!add) return;
+        const entry = state.cablePickerEntry,
+          quantity = Number($("#cablePickQuantity").value),
+          saleUnit = state.cablePickerUnit;
+        if (
+          !entry ||
+          !saleUnit ||
+          !Number.isFinite(quantity) ||
+          quantity <= 0
+        ) {
+          toast("Enter a valid cable quantity", true);
+          return;
+        }
+        if (saleUnit === "roll" && !Number.isInteger(quantity)) {
+          toast("Roll quantity must be a whole number", true);
+          return;
+        }
+        const cost = saleUnit === "meter" ? entry.meter_cost : entry.roll_cost,
+          selling = saleUnit === "meter" ? entry.meter_price : entry.roll_price;
+        if (cost === null || selling === null) {
+          toast("That cable unit is unavailable", true);
+          return;
+        }
+        const size = entry.size + (entry.variant ? ` (${entry.variant})` : ""),
+          supplierShort =
+            entry.supplier === "Liban Cables" ? "Liban" : entry.supplier,
+          key = `cable:${entry.id}:${saleUnit}:${Number(cost)}:${Number(selling)}`,
+          existing = state.cart.get(key),
+          line = {
+            cartKey: key,
+            source_type: "cable",
+            source_id: entry.id,
+            cable_entry_id: entry.id,
+            family_name_at_sale: entry.family_name,
+            supplier_at_sale: entry.supplier,
+            size_at_sale: size,
+            description_at_sale: `${entry.family_name} ${size} - ${supplierShort}`,
+            name_en: `${entry.family_name} ${size} - ${supplierShort}`,
+            sale_unit: saleUnit,
+            cost_price_at_sale: Number(cost),
+            selling_price_at_sale: Number(selling),
+            selling_price: Number(selling),
+            qty: (existing?.qty || 0) + quantity,
+          };
+        state.cart.set(key, line);
+        renderCart();
+        closeCablePicker();
+        toast("Cable added to order");
+      };
+      $("#cablePickSelection").onkeydown = (e) => {
+        if (e.key === "Enter" && e.target.id === "cablePickQuantity") {
+          e.preventDefault();
+          $("#addCableToOrder")?.click();
+        }
+      };
+      function renderPagination(totalPages) {
+        const pager = $("#productPagination");
+        if (totalPages <= 1) {
+          pager.hidden = true;
+          pager.innerHTML = "";
+          return;
+        }
+        pager.hidden = false;
+        const pages = new Set([1, totalPages]);
+        for (
+          let page = Math.max(1, state.productPage - 2);
+          page <= Math.min(totalPages, state.productPage + 2);
+          page++
+        )
+          pages.add(page);
+        const ordered = [...pages].sort((a, b) => a - b),
+          items = [];
+        ordered.forEach((page, index) => {
+          if (index && page - ordered[index - 1] > 1)
+            items.push('<span class="page-gap">…</span>');
+          items.push(
+            `<button class="page-btn ${page === state.productPage ? "active" : ""}" data-page="${page}" ${page === state.productPage ? 'aria-current="page"' : ""}>${page}</button>`,
+          );
+        });
+        pager.innerHTML = `<button class="page-btn" data-page="${state.productPage - 1}" ${state.productPage === 1 ? "disabled" : ""}>‹ Previous</button>${items.join("")}<button class="page-btn" data-page="${state.productPage + 1}" ${state.productPage === totalPages ? "disabled" : ""}>Next ›</button>`;
+      }
+      async function loadProducts() {
+        try {
+          const q = $("#productSearch").value.trim(),
+            settings = await api("/api/product-settings"),
+            limit = q ? 500 : settings.productsPerPage,
+            page = q ? 1 : state.productPage,
+            base =
+              "search=" +
+              encodeURIComponent(q) +
+              "&limit=" +
+              limit +
+              "&page=" +
+              page;
+          const [products, meta] = await Promise.all([
+              api("/api/products?" + base),
+              api("/api/products/meta"),
+            ]),
+            total = Number(meta.total),
+            totalPages = Math.max(
+              1,
+              Math.ceil(total / settings.productsPerPage),
+            );
+          if (!q && state.productPage > totalPages) {
+            state.productPage = totalPages;
+            return loadProducts();
+          }
+          state.products = products;
+          state.settings = settings;
+          state.stockEnabled = settings.stockTrackingEnabled;
+          $("#productTable").classList.toggle(
+            "stock-on",
+            settings.stockTrackingEnabled,
+          );
+          $("#productTable").classList.toggle(
+            "cost-on",
+            settings.showCostPrice,
+          );
+          $("#productHead").innerHTML =
+            `<div>Product</div>${settings.showCostPrice ? '<div class="num">Cost</div>' : ""}<div class="num">Selling</div>${settings.stockTrackingEnabled ? '<div class="num">Stock</div>' : ""}<div></div>`;
+          $("#productCount").textContent = total.toLocaleString() + " Products";
+          const start = (state.productPage - 1) * settings.productsPerPage + 1,
+            end = Math.min(state.productPage * settings.productsPerPage, total);
+          $("#shownCount").textContent = q
+            ? `Showing ${products.length} search result${products.length === 1 ? "" : "s"}`
+            : `Showing ${start.toLocaleString()}–${end.toLocaleString()} of ${total.toLocaleString()}`;
+          $("#productRows").innerHTML = products.length
+            ? products
+                .map(
+                  (p) =>
+                    `<div class="product-row" data-edit="${p.id}"><div class="product-name">${highlight(p.name_en, q)}</div>${settings.showCostPrice ? `<div class="num">${money(p.cost_price)}</div>` : ""}<div class="num selling">${money(p.selling_price)}</div>${settings.stockTrackingEnabled ? `<div class="num stock-value ${p.stock_counted ? "" : "unknown"}">${p.stock_counted ? `<button class="stock-edit" data-stock-edit="${p.id}" title="Set current stock">${Number(p.current_stock).toLocaleString()}</button>` : "Not counted"}</div>` : ""}<button class="edit" title="Edit product" aria-label="Edit ${esc(p.name_en)}">✎</button></div>`,
+                )
+                .join("")
+            : '<div class="empty">No products found</div>';
+          if (q) {
+            $("#productPagination").hidden = true;
+            $("#productPagination").innerHTML = "";
+          } else renderPagination(totalPages);
+        } catch (e) {
+          toast(e.message, true);
+        }
+      }
+      let productDelay;
+      $("#productSearch").oninput = () => {
+        state.productPage = 1;
+        clearTimeout(productDelay);
+        productDelay = setTimeout(loadProducts, 120);
+      };
+      $("#productPagination").onclick = (e) => {
+        const button = e.target.closest("[data-page]");
+        if (!button || button.disabled) return;
+        state.productPage = Number(button.dataset.page);
+        loadProducts();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+      $("#productRows").onclick = (e) => {
+        const row = e.target.closest("[data-edit]");
+        if (row)
+          openEditor(
+            state.products.find((p) => p.id === Number(row.dataset.edit)),
+          );
+      };
+      function openEditor(p = null) {
+        state.editing = p;
+        const f = $("#editForm");
+        f.reset();
+        $("#modalTitle").textContent = p ? "Edit product" : "New product";
+        $("#deleteProduct").hidden = !p;
+        $("#editStockField").hidden = !(state.stockEnabled && p);
+        if (p) {
+          f.name_en.value = p.name_en;
+          f.cost_price.value = p.cost_price;
+          f.selling_price.value = p.selling_price;
+          $("#editStock").value = p.stock_counted ? p.current_stock : "";
+          $("#resetEditStock").hidden = !p.stock_counted;
+        }
+        $("#editDialog").showModal();
+        f.name_en.focus();
+      }
+      $("#addProduct").onclick = () => openEditor();
+      $("#closeModal").onclick = $("#cancelModal").onclick = () =>
+        $("#editDialog").close();
+      $("#editForm").onsubmit = async (e) => {
+        e.preventDefault();
+        const f = e.currentTarget,
+          d = Object.fromEntries(new FormData(f));
+        if (!(state.editing && state.stockEnabled)) delete d.stock_quantity;
+        if (state.editing)
+          Object.assign(d, {
+            name_ar: state.editing.name_ar,
+            category: state.editing.category,
+            unit: state.editing.unit,
+            is_cable: !!state.editing.is_cable,
+          });
+        try {
+          await api(
+            "/api/products" + (state.editing ? "/" + state.editing.id : ""),
+            {
+              method: state.editing ? "PUT" : "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(d),
+            },
+          );
+          $("#editDialog").close();
+          toast(state.editing ? "Product updated" : "Product created");
+          loadProducts();
+        } catch (x) {
+          toast(x.message, true);
+        }
+      };
+      $("#resetEditStock").onclick = async () => {
+        if (
+          !state.editing ||
+          !(await appConfirm({
+            title: "Reset stock count?",
+            message: "This product will return to “Not counted”.",
+            action: "Reset",
+          }))
+        )
+          return;
+        try {
+          await api("/api/products/" + state.editing.id + "/stock-reset", {
+            method: "POST",
+          });
+          state.editing.stock_counted = 0;
+          state.editing.current_stock = null;
+          $("#editStock").value = "";
+          $("#resetEditStock").hidden = true;
+          toast("Stock reset to Not counted");
+          loadProducts();
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      renderCart();
+      loadProducts();
+      $("#deleteProduct").onclick = async () => {
+        if (
+          !state.editing ||
+          !(await appConfirm({
+            title: "Delete product?",
+            message:
+              "This product will be permanently removed from the current Products list. Historical transactions will remain preserved.",
+            action: "Delete",
+          }))
+        )
+          return;
+        try {
+          await api("/api/products/" + state.editing.id, { method: "DELETE" });
+          $("#editDialog").close();
+          toast("Product deleted");
+          loadProducts();
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      $("#productSettings").onclick = async () => {
+        try {
+          const s = await api("/api/product-settings");
+          $("#stockToggle").checked = s.stockTrackingEnabled;
+          $("#costToggle").checked = s.showCostPrice;
+          $("#productsPerPage").value = s.productsPerPage;
+          syncStockToggle();
+          $("#settingsDialog").showModal();
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      function syncStockToggle() {
+        $("#openingStock").hidden = !$("#stockToggle").checked;
+      }
+      $("#stockToggle").onchange = syncStockToggle;
+      $("#closeSettings").onclick = $("#cancelSettings").onclick = () =>
+        $("#settingsDialog").close();
+      function settingsPayload() {
+        return {
+          stockTrackingEnabled: $("#stockToggle").checked,
+          showCostPrice: $("#costToggle").checked,
+          productsPerPage: Number($("#productsPerPage").value),
+        };
+      }
+      $("#saveSettings").onclick = async () => {
+        try {
+          const s = await api("/api/product-settings", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(settingsPayload()),
+          });
+          state.settings = s;
+          state.stockEnabled = s.stockTrackingEnabled;
+          state.productPage = 1;
+          $("#settingsDialog").close();
+          toast("Product settings saved");
+          loadProducts();
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      async function loadStockRows() {
+        try {
+          const q = $("#stockSearch").value.trim(),
+            products = await api(
+              "/api/products?search=" + encodeURIComponent(q) + "&limit=100",
+            );
+          $("#stockRows").innerHTML = products.length
+            ? products
+                .map(
+                  (p) =>
+                    `<div class="stock-count-row"><input class="reset-check" type="checkbox" data-reset-id="${p.id}" ${p.stock_counted ? "" : "disabled"} ${state.resetSelection.has(p.id) ? "checked" : ""} title="Select for Reset Count"><div><strong>${esc(p.name_en)}</strong><div class="stock-meta">Current: ${p.stock_counted ? Number(p.current_stock).toLocaleString() : "Not counted"}</div></div><input type="number" min="0" step="any" inputmode="decimal" placeholder="Counted qty" data-session-qty="${p.id}" value="${esc(state.stockSession.get(p.id) ?? "")}"></div>`,
+                )
+                .join("")
+            : '<div class="empty">No products found</div>';
+        } catch (e) {
+          toast(e.message, true);
+        }
+      }
+      $("#openingStock").onclick = async () => {
+        try {
+          const s = await api("/api/product-settings", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(settingsPayload()),
+          });
+          state.settings = s;
+          state.stockEnabled = true;
+          state.stockSession.clear();
+          state.resetSelection.clear();
+          $("#settingsDialog").close();
+          $("#stockSearch").value = "";
+          $("#stockDialog").showModal();
+          loadStockRows();
+          $("#stockSearch").focus();
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      function cancelStockSession() {
+        state.stockSession.clear();
+        state.resetSelection.clear();
+        $("#stockDialog").close();
+        loadProducts();
+      }
+      $("#closeStock").onclick = $("#cancelStock").onclick = cancelStockSession;
+      let stockDelay;
+      $("#stockSearch").oninput = () => {
+        clearTimeout(stockDelay);
+        stockDelay = setTimeout(loadStockRows, 120);
+      };
+      $("#stockRows").oninput = (e) => {
+        if (e.target.matches("[data-session-qty]")) {
+          const id = Number(e.target.dataset.sessionQty);
+          if (e.target.value === "") state.stockSession.delete(id);
+          else state.stockSession.set(id, e.target.value);
+        }
+        if (e.target.matches("[data-reset-id]")) {
+          const id = Number(e.target.dataset.resetId);
+          if (e.target.checked) state.resetSelection.add(id);
+          else state.resetSelection.delete(id);
+        }
+      };
+      $("#resetStock").onclick = async () => {
+        const productIds = [...state.resetSelection];
+        if (!productIds.length) {
+          toast("Select at least one counted product", true);
+          return;
+        }
+        if (
+          !(await appConfirm({
+            title: "Reset stock count?",
+            message: `${productIds.length} product${productIds.length === 1 ? "" : "s"} will return to “Not counted”.`,
+            action: "Reset",
+          }))
+        )
+          return;
+        try {
+          const r = await api("/api/products/stock-reset", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productIds }),
+          });
+          productIds.forEach((id) => state.stockSession.delete(id));
+          state.resetSelection.clear();
+          toast(
+            `${r.reset} product${r.reset === 1 ? "" : "s"} reset to Not counted`,
+          );
+          loadStockRows();
+          loadProducts();
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      $("#saveOpeningStock").onclick = async () => {
+        const counts = [...state.stockSession].map(([productId, quantity]) => ({
+          productId,
+          quantity,
+        }));
+        if (!counts.length) {
+          toast("Enter at least one counted quantity", true);
+          return;
+        }
+        const button = $("#saveOpeningStock");
+        button.disabled = true;
+        try {
+          const r = await api("/api/products/stock-count", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ counts }),
+          });
+          state.stockSession.clear();
+          state.resetSelection.clear();
+          $("#stockDialog").close();
+          toast(
+            `${r.saved} opening stock count${r.saved === 1 ? "" : "s"} saved`,
+          );
+          loadProducts();
+        } catch (e) {
+          toast(e.message, true);
+        } finally {
+          button.disabled = false;
+        }
+      };
+      const cableValue = (value) =>
+        value === null || value === undefined ? "—" : money(value);
+      loadCables = async function () {
+        try {
+          const q = $("#cableSearch").value.trim(),
+            [entries, settings] = await Promise.all([
+              api("/api/cables?search=" + encodeURIComponent(q)),
+              api("/api/cable-settings"),
+            ]);
+          state.cables = entries;
+          state.showListPrices = settings.showListPrices;
+          const families = new Map();
+          entries.forEach((entry) => {
+            if (!families.has(entry.family_id))
+              families.set(entry.family_id, {
+                name: entry.family_name,
+                entries: [],
+              });
+            families.get(entry.family_id).entries.push(entry);
+          });
+          $("#cableFamilies").innerHTML = families.size
+            ? [...families.values()]
+                .map((family) => {
+                  let supplier = "";
+                  const hasRoll = family.entries.some(
+                      (entry) => entry.pricing_unit === "roll",
+                    ),
+                    layout = hasRoll ? "" : "meter-only",
+                    wide = family.entries.length > 30 ? "wide" : "";
+                  const rows = family.entries
+                    .map((entry) => {
+                      let head = "";
+                      if (entry.supplier !== supplier) {
+                        supplier = entry.supplier;
+                        head = `<div class="supplier-head ${supplier === "Liban Cables" ? "liban" : "mcc"}">${esc(supplier)}</div>`;
+                      }
+                      const tone =
+                          entry.supplier === "Liban Cables" ? "liban" : "mcc",
+                        size =
+                          entry.size +
+                          (entry.variant ? ` (${entry.variant})` : "");
+                      return (
+                        head +
+                        `<div class="cable-grid cable-row ${tone} ${layout} ${settings.showListPrices ? "show-list" : ""}"><div class="cable-size">${highlight(size, q)}</div>${settings.showListPrices ? `<div class="list-edit"><input type="number" min="0" step="0.01" value="${Number(entry.list_price).toFixed(2)}" data-list-price="${entry.id}"><button class="list-save" data-save-list="${entry.id}">Save</button></div>` : ""}${hasRoll ? `<div class="cable-num">${cableValue(entry.roll_cost)}</div><div class="cable-num">${cableValue(entry.roll_price)}</div>` : ""}<div class="cable-num">${cableValue(entry.meter_cost)}</div><div class="cable-num">${cableValue(entry.meter_price)}</div></div>`
+                      );
+                    })
+                    .join("");
+                  return `<section class="cable-family ${wide}"><h2 dir="auto">${highlight(family.name, q)}</h2><div class="cable-table"><div class="cable-grid cable-head ${layout} ${settings.showListPrices ? "show-list" : ""}"><div>Size</div>${settings.showListPrices ? '<div class="cable-num">List Price</div>' : ""}${hasRoll ? '<div class="cable-num">Cost اللفة</div><div class="cable-num">Price اللفة</div>' : ""}<div class="cable-num">Cost 1 متر</div><div class="cable-num">Price 1 متر</div></div>${rows}</div></section>`;
+                })
+                .join("")
+            : '<div class="empty">No cables found</div>';
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      state.cableEditing = false;
+      const cableFamilyColors = [
+        "#e7a532",
+        "#48b9a8",
+        "#9a7be8",
+        "#e56f73",
+        "#55a5e2",
+        "#d47e42",
+        "#5fc37b",
+        "#d161a6",
+        "#80b858",
+        "#ceae50",
+        "#60b8cf",
+        "#b879e0",
+        "#d78a66",
+      ];
+      function cableColumnCount() {
+        return window.innerWidth >= 1450 ? 3 : window.innerWidth >= 800 ? 2 : 1;
+      }
+      function cableSourceEditor(entry) {
+        return `<div class="source-meta" data-cable-editor="${entry.id}"><label>Source <input class="source-code" data-source-code value="${esc(entry.source_code)}"></label><label>Unit <select data-pricing-unit><option value="roll" ${entry.pricing_unit === "roll" ? "selected" : ""}>Roll</option><option value="meter" ${entry.pricing_unit === "meter" ? "selected" : ""}>Meter</option><option value="unknown" ${entry.pricing_unit === "unknown" ? "selected" : ""}>Unknown</option></select></label><label>Length <input class="source-length" data-roll-length type="number" min="0.01" step="0.01" value="${entry.roll_length_meters ?? ""}" ${entry.pricing_unit === "roll" ? "" : "disabled"}></label><button class="btn source-save" data-save-cable="${entry.id}">Save</button></div>`;
+      }
+      function renderCableMasonry(cards) {
+        const count = cableColumnCount(),
+          buckets = Array.from({ length: count }, () => ({
+            height: 0,
+            cards: [],
+          }));
+        cards.forEach((card, index) => {
+          const bucket =
+            index < count
+              ? buckets[index]
+              : buckets.reduce(
+                  (best, next) => (next.height < best.height ? next : best),
+                  buckets[0],
+                );
+          bucket.cards.push(card.html);
+          bucket.height += card.weight;
+        });
+        $("#cableFamilies").innerHTML = buckets
+          .map(
+            (bucket) =>
+              `<div class="cable-masonry-column">${bucket.cards.join("")}</div>`,
+          )
+          .join("");
+      }
+      loadCables = async function () {
+        try {
+          const q = $("#cableSearch").value.trim(),
+            [entries, settings, rules] = await Promise.all([
+              api("/api/cables?search=" + encodeURIComponent(q)),
+              api("/api/cable-settings"),
+              api("/api/cable-pricing-rules"),
+            ]);
+          state.cables = entries;
+          state.showListPrices = settings.showListPrices;
+          const liban = rules.find((rule) => rule.supplier === "Liban Cables"),
+            mcc = rules.find((rule) => rule.supplier === "MCC");
+          if (document.activeElement !== $("#libanDiscount"))
+            $("#libanDiscount").value = Number(liban?.percentage ?? 15)
+              .toFixed(2)
+              .replace(/\.00$/, "");
+          if (document.activeElement !== $("#mccAdjustment"))
+            $("#mccAdjustment").value = Number(mcc?.percentage ?? 6)
+              .toFixed(2)
+              .replace(/\.00$/, "");
+          const families = new Map();
+          entries.forEach((entry) => {
+            if (!families.has(entry.family_id))
+              families.set(entry.family_id, {
+                id: entry.family_id,
+                name: entry.family_name,
+                entries: [],
+              });
+            families.get(entry.family_id).entries.push(entry);
+          });
+          const cards = [...families.values()].map((family) => {
+            let supplier = "",
+              supplierCount = 0;
+            const hasRoll = family.entries.some(
+                (entry) => entry.pricing_unit === "roll",
+              ),
+              layout = hasRoll ? "" : "meter-only",
+              showSource = settings.showListPrices || state.cableEditing;
+            const rows = family.entries
+                .map((entry) => {
+                  let head = "";
+                  if (entry.supplier !== supplier) {
+                    supplier = entry.supplier;
+                    supplierCount++;
+                    head = `<div class="supplier-head ${supplier === "Liban Cables" ? "liban" : "mcc"}">${esc(supplier)}</div>`;
+                  }
+                  const tone =
+                      entry.supplier === "Liban Cables" ? "liban" : "mcc",
+                    size =
+                      entry.size + (entry.variant ? ` (${entry.variant})` : "");
+                  const sizeCell = state.cableEditing
+                      ? `<input class="source-input" data-size value="${esc(entry.size)}" aria-label="Cable size">`
+                      : highlight(size, q),
+                    listCell = showSource
+                      ? state.cableEditing
+                        ? `<div class="list-edit"><input class="source-input" data-list-price="${entry.id}" type="number" min="0" step="0.01" value="${Number(entry.list_price).toFixed(2)}"></div>`
+                        : `<div class="cable-num">${money(entry.list_price)}</div>`
+                      : "";
+                  return (
+                    head +
+                    `<div class="cable-grid cable-row ${tone} ${layout} ${showSource ? "show-list" : ""}"><div class="cable-size">${sizeCell}${state.cableEditing && entry.variant ? ` <span class="hint">(${esc(entry.variant)})</span>` : ""}</div>${listCell}${hasRoll ? `<div class="cable-num">${cableValue(entry.roll_cost)}</div><div class="cable-num">${cableValue(entry.roll_price)}</div>` : ""}<div class="cable-num">${cableValue(entry.meter_cost)}</div><div class="cable-num">${cableValue(entry.meter_price)}</div></div>${state.cableEditing ? cableSourceEditor(entry) : ""}`
+                  );
+                })
+                .join(""),
+              head = `<div class="cable-grid cable-head ${layout} ${showSource ? "show-list" : ""}"><div>Size</div>${showSource ? '<div class="cable-num">List Price</div>' : ""}${hasRoll ? '<div class="cable-num">Cost Roll</div><div class="cable-num">Price Roll</div>' : ""}<div class="cable-num">Cost 1M</div><div class="cable-num">Price 1M</div></div>`;
+            return {
+              weight: family.entries.length + supplierCount + 2,
+              html: `<section class="cable-family ${state.cableEditing ? "cable-editing" : ""}" style="--family-accent:${cableFamilyColors[(family.id - 1) % cableFamilyColors.length]}"><h2 dir="auto">${highlight(family.name, q)}</h2><div class="cable-table">${head}${rows}</div></section>`,
+            };
+          });
+          if (cards.length) renderCableMasonry(cards);
+          else
+            $("#cableFamilies").innerHTML =
+              '<div class="empty">No cables found</div>';
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      $("#cableEditMode").onclick = () => {
+        state.cableEditing = !state.cableEditing;
+        $("#cableEditMode").textContent = state.cableEditing
+          ? "Done Editing"
+          : "Edit";
+        $("#cableEditMode").classList.toggle("active", state.cableEditing);
+        $("#libanDiscount").disabled = !state.cableEditing;
+        $("#mccAdjustment").disabled = !state.cableEditing;
+        $("#saveCableRules").hidden = !state.cableEditing;
+        loadCables();
+      };
+      $("#saveCableRules").onclick = async () => {
+        const button = $("#saveCableRules");
+        button.disabled = true;
+        try {
+          await api("/api/cable-pricing-rules", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              libanDiscount: $("#libanDiscount").value,
+              mccAdjustment: $("#mccAdjustment").value,
+            }),
+          });
+          toast("Cable pricing rules updated");
+          await loadCables();
+        } catch (e) {
+          toast(e.message, true);
+        } finally {
+          button.disabled = false;
+        }
+      };
+      $("#cableFamilies").addEventListener("change", (e) => {
+        if (e.target.matches("[data-pricing-unit]")) {
+          const editor = e.target.closest("[data-cable-editor]"),
+            length = editor.querySelector("[data-roll-length]");
+          length.disabled = e.target.value !== "roll";
+          if (e.target.value !== "roll") length.value = "";
+        }
+      });
+      $("#cableFamilies").addEventListener("click", async (e) => {
+        const button = e.target.closest("[data-save-cable]");
+        if (!button) return;
+        const editor = button.closest("[data-cable-editor]"),
+          row = editor.previousElementSibling;
+        button.disabled = true;
+        try {
+          await api("/api/cables/" + button.dataset.saveCable, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              size: row.querySelector("[data-size]").value,
+              listPrice: row.querySelector("[data-list-price]").value,
+              sourceCode: editor.querySelector("[data-source-code]").value,
+              pricingUnit: editor.querySelector("[data-pricing-unit]").value,
+              rollLengthMeters:
+                editor.querySelector("[data-roll-length]").value,
+            }),
+          });
+          toast("Cable source updated");
+          await loadCables();
+        } catch (x) {
+          toast(x.message, true);
+          button.disabled = false;
+        }
+      });
+      let cableResizeWidth = window.innerWidth,
+        cableResizeDelay;
+      window.addEventListener("resize", () => {
+        if (cableColumnCount() === (cableResizeWidth >= 1000 ? 2 : 1)) return;
+        cableResizeWidth = window.innerWidth;
+        clearTimeout(cableResizeDelay);
+        cableResizeDelay = setTimeout(() => {
+          if ($("#cables").classList.contains("active")) loadCables();
+        }, 100);
+      });
+      const simpleCableColors = [
+        "#65d18e",
+        "#efb847",
+        "#55bfd0",
+        "#b493ed",
+        "#e5bd4f",
+        "#ed7e7e",
+        "#64a9eb",
+        "#f092bd",
+        "#d98a55",
+        "#9bc65e",
+        "#68c5b4",
+        "#cf8be5",
+        "#e6a064",
+      ];
+      state.cableDraft = new Map();
+      state.cableRuleDraft = null;
+      cableColumnCount = () => (window.innerWidth >= 1000 ? 2 : 1);
+      renderCableMasonry = function (cards) {
+        const count = cableColumnCount(),
+          buckets = Array.from({ length: count }, () => []);
+        cards.forEach((card, index) => buckets[index % count].push(card.html));
+        $("#cableFamilies").innerHTML = buckets
+          .map(
+            (bucket) =>
+              `<div class="cable-masonry-column">${bucket.join("")}</div>`,
+          )
+          .join("");
+      };
+      loadCables = async function () {
+        try {
+          const q = $("#cableSearch").value.trim(),
+            [entries, settings, rules] = await Promise.all([
+              api("/api/cables?search=" + encodeURIComponent(q)),
+              api("/api/cable-settings"),
+              api("/api/cable-pricing-rules"),
+            ]);
+          state.cables = entries;
+          state.showListPrices = settings.showListPrices;
+          const liban = rules.find((rule) => rule.supplier === "Liban Cables"),
+            mcc = rules.find((rule) => rule.supplier === "MCC");
+          if (state.cableEditing) {
+            if (!state.cableRuleDraft)
+              state.cableRuleDraft = {
+                libanDiscount: Number(liban?.percentage ?? 15),
+                mccAdjustment: Number(mcc?.percentage ?? 6),
+              };
+            entries.forEach((entry) => {
+              if (!state.cableDraft.has(entry.id))
+                state.cableDraft.set(entry.id, Number(entry.list_price));
+            });
+            $("#libanDiscount").value = state.cableRuleDraft.libanDiscount;
+            $("#mccAdjustment").value = state.cableRuleDraft.mccAdjustment;
+          } else {
+            $("#libanDiscount").value = Number(liban?.percentage ?? 15)
+              .toFixed(2)
+              .replace(/\.00$/, "");
+            $("#mccAdjustment").value = Number(mcc?.percentage ?? 6)
+              .toFixed(2)
+              .replace(/\.00$/, "");
+          }
+          const families = new Map();
+          entries.forEach((entry) => {
+            if (!families.has(entry.family_id))
+              families.set(entry.family_id, {
+                id: entry.family_id,
+                name: entry.family_name,
+                entries: [],
+              });
+            families.get(entry.family_id).entries.push(entry);
+          });
+          const cards = [...families.values()].map((family) => {
+            let supplier = "",
+              supplierCount = 0;
+            const hasRoll = family.entries.some(
+                (entry) => entry.pricing_unit === "roll",
+              ),
+              layout = hasRoll ? "" : "meter-only",
+              showList = settings.showListPrices || state.cableEditing;
+            const rows = family.entries
+                .map((entry) => {
+                  let head = "";
+                  if (entry.supplier !== supplier) {
+                    supplier = entry.supplier;
+                    supplierCount++;
+                    head = `<div class="supplier-head ${supplier === "Liban Cables" ? "liban" : "mcc"}">${esc(supplier)}</div>`;
+                  }
+                  const tone =
+                      entry.supplier === "Liban Cables" ? "liban" : "mcc",
+                    size =
+                      entry.size + (entry.variant ? ` (${entry.variant})` : ""),
+                    list = state.cableEditing
+                      ? state.cableDraft.get(entry.id)
+                      : entry.list_price,
+                    listCell = showList
+                      ? state.cableEditing
+                        ? `<div class="list-edit"><input class="source-input" data-draft-price="${entry.id}" type="number" min="0" step="0.01" value="${Number(list).toFixed(2)}" aria-label="List Price for ${esc(size)}"></div>`
+                        : `<div class="cable-num">${money(list)}</div>`
+                      : "";
+                  return (
+                    head +
+                    `<div class="cable-grid cable-row ${tone} ${layout} ${showList ? "show-list" : ""}"><div class="cable-size">${highlight(size, q)}</div>${listCell}${hasRoll ? `<div class="cable-num">${cableValue(entry.roll_cost)}</div><div class="cable-num">${cableValue(entry.roll_price)}</div>` : ""}<div class="cable-num">${cableValue(entry.meter_cost)}</div><div class="cable-num">${cableValue(entry.meter_price)}</div></div>`
+                  );
+                })
+                .join(""),
+              head = `<div class="cable-grid cable-head ${layout} ${showList ? "show-list" : ""}"><div>Size</div>${showList ? '<div class="cable-num">List Price</div>' : ""}${hasRoll ? '<div class="cable-num">Cost Roll</div><div class="cable-num">Price Roll</div>' : ""}<div class="cable-num">Cost 1M</div><div class="cable-num">Price 1M</div></div>`;
+            return {
+              html: `<section class="cable-family ${state.cableEditing ? "cable-editing" : ""}" style="--family-accent:${simpleCableColors[(family.id - 1) % simpleCableColors.length]}"><h2 dir="auto">${highlight(family.name, q)}</h2><div class="cable-table">${head}${rows}</div></section>`,
+            };
+          });
+          if (cards.length) renderCableMasonry(cards);
+          else
+            $("#cableFamilies").innerHTML =
+              '<div class="empty">No cables found</div>';
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      function setCableEditing(active) {
+        state.cableEditing = active;
+        $("#cableEditMode").hidden = active;
+        $("#cableEditMode").classList.toggle("active", active);
+        $("#cableEditActions").hidden = !active;
+        $("#libanDiscount").disabled = !active;
+        $("#mccAdjustment").disabled = !active;
+        if (!active) {
+          state.cableDraft.clear();
+          state.cableRuleDraft = null;
+        }
+        loadCables();
+      }
+      $("#cableEditMode").onclick = () => setCableEditing(true);
+      $("#cancelCableEdit").onclick = () => {
+        setCableEditing(false);
+        toast("Unsaved cable changes discarded");
+      };
+      $("#libanDiscount").oninput = (e) => {
+        if (state.cableEditing && state.cableRuleDraft)
+          state.cableRuleDraft.libanDiscount = e.target.value;
+      };
+      $("#mccAdjustment").oninput = (e) => {
+        if (state.cableEditing && state.cableRuleDraft)
+          state.cableRuleDraft.mccAdjustment = e.target.value;
+      };
+      $("#cableFamilies").addEventListener("input", (e) => {
+        if (e.target.matches("[data-draft-price]"))
+          state.cableDraft.set(
+            Number(e.target.dataset.draftPrice),
+            e.target.value,
+          );
+      });
+      $("#saveCableChanges").onclick = async () => {
+        const button = $("#saveCableChanges");
+        button.disabled = true;
+        try {
+          const result = await api("/api/cables/batch-edit", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              libanDiscount: state.cableRuleDraft?.libanDiscount,
+              mccAdjustment: state.cableRuleDraft?.mccAdjustment,
+              prices: [...state.cableDraft].map(([id, listPrice]) => ({
+                id,
+                listPrice,
+              })),
+            }),
+          });
+          state.cableEditing = false;
+          state.cableDraft.clear();
+          state.cableRuleDraft = null;
+          $("#cableEditMode").hidden = false;
+          $("#cableEditMode").classList.remove("active");
+          $("#cableEditActions").hidden = true;
+          $("#libanDiscount").disabled = true;
+          $("#mccAdjustment").disabled = true;
+          toast(`${result.updated} List Prices and pricing settings saved`);
+          await loadCables();
+        } catch (e) {
+          toast(e.message, true);
+        } finally {
+          button.disabled = false;
+        }
+      };
+      document.addEventListener("click", (e) => {
+        const selected = e.target.closest("#cableFamilies .cable-row");
+        document
+          .querySelectorAll("#cableFamilies .cable-row.focused")
+          .forEach((row) => row.classList.remove("focused"));
+        if (selected) selected.classList.add("focused");
+      });
+      state.cableOriginalPrices = new Map();
+      state.cableOriginalRules = null;
+      const sameCableNumber = (value, original) =>
+        String(value ?? "").trim() !== "" &&
+        Number.isFinite(Number(value)) &&
+        Math.abs(Number(value) - Number(original)) < 1e-10;
+      function formatCableUpdateDate(value) {
+        if (!value) return "Not yet";
+        const date = new Date(
+          String(value).replace(" ", "T") +
+            (String(value).includes("T") ? "" : "Z"),
+        );
+        return Number.isNaN(date.getTime())
+          ? String(value)
+          : new Intl.DateTimeFormat("en-GB", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            }).format(date);
+      }
+      async function refreshCableUpdateDate(value) {
+        try {
+          const timestamp =
+            value ?? (await api("/api/cable-settings")).lastPriceUpdate;
+          $("#lastCablePriceUpdate").textContent =
+            "Last price update: " + formatCableUpdateDate(timestamp);
+        } catch (e) {
+          $("#lastCablePriceUpdate").textContent =
+            "Last price update: Unavailable";
+        }
+      }
+      function prepareCableUndoButtons() {
+        document.querySelectorAll("[data-draft-price]").forEach((input) => {
+          const wrap = input.closest(".list-edit");
+          if (!wrap.querySelector("[data-undo-price]"))
+            wrap.insertAdjacentHTML(
+              "beforeend",
+              `<button class="field-undo" data-undo-price="${input.dataset.draftPrice}" title="Restore original List Price" hidden>↶</button>`,
+            );
+        });
+      }
+      function cableUnsavedCount() {
+        let count = 0;
+        state.cableDraft.forEach((value, id) => {
+          if (!sameCableNumber(value, state.cableOriginalPrices.get(id)))
+            count++;
+        });
+        if (state.cableRuleDraft && state.cableOriginalRules) {
+          if (
+            !sameCableNumber(
+              state.cableRuleDraft.libanDiscount,
+              state.cableOriginalRules.libanDiscount,
+            )
+          )
+            count++;
+          if (
+            !sameCableNumber(
+              state.cableRuleDraft.mccAdjustment,
+              state.cableOriginalRules.mccAdjustment,
+            )
+          )
+            count++;
+        }
+        return count;
+      }
+      function updateCableDirtyUI() {
+        if (!state.cableEditing) return;
+        prepareCableUndoButtons();
+        document.querySelectorAll("[data-draft-price]").forEach((input) => {
+          const changed = !sameCableNumber(
+              input.value,
+              state.cableOriginalPrices.get(Number(input.dataset.draftPrice)),
+            ),
+            wrap = input.closest(".list-edit");
+          wrap.classList.toggle("changed", changed);
+          wrap.querySelector("[data-undo-price]").hidden = !changed;
+        });
+        for (const key of ["libanDiscount", "mccAdjustment"]) {
+          const input = $("#" + key),
+            changed = !sameCableNumber(
+              input.value,
+              state.cableOriginalRules?.[key],
+            ),
+            wrap = input.closest(".pricing-input"),
+            undo = document.querySelector(`[data-undo-rule="${key}"]`);
+          wrap.classList.toggle("changed", changed);
+          undo.hidden = !changed;
+        }
+        const count = cableUnsavedCount(),
+          label = $("#cableUnsaved");
+        label.textContent = count
+          ? `${count} unsaved change${count === 1 ? "" : "s"}`
+          : "No unsaved changes";
+        label.classList.toggle("has-changes", !!count);
+        $("#saveCableChanges").disabled = !count;
+      }
+      const loadCablesWithDraftUI = loadCables;
+      loadCables = async function () {
+        await loadCablesWithDraftUI();
+        if (state.cableEditing) updateCableDirtyUI();
+      };
+      setCableEditing = function (active) {
+        state.cableEditing = active;
+        $("#cableEditMode").hidden = active;
+        $("#cableEditMode").classList.toggle("active", active);
+        $("#cableEditActions").hidden = !active;
+        $("#libanDiscount").disabled = !active;
+        $("#mccAdjustment").disabled = !active;
+        if (active) {
+          state.cableOriginalPrices = new Map(
+            state.cables.map((entry) => [entry.id, Number(entry.list_price)]),
+          );
+          state.cableDraft = new Map(state.cableOriginalPrices);
+          state.cableOriginalRules = {
+            libanDiscount: Number($("#libanDiscount").value),
+            mccAdjustment: Number($("#mccAdjustment").value),
+          };
+          state.cableRuleDraft = { ...state.cableOriginalRules };
+        } else {
+          state.cableDraft.clear();
+          state.cableRuleDraft = null;
+          state.cableOriginalPrices.clear();
+          state.cableOriginalRules = null;
+        }
+        loadCables();
+      };
+      $("#cableEditMode").onclick = () => setCableEditing(true);
+      $("#cancelCableEdit").onclick = () => {
+        setCableEditing(false);
+        toast("Unsaved cable changes discarded");
+      };
+      $("#libanDiscount").addEventListener("input", updateCableDirtyUI);
+      $("#mccAdjustment").addEventListener("input", updateCableDirtyUI);
+      $("#cableFamilies").addEventListener("input", (e) => {
+        if (e.target.matches("[data-draft-price]")) updateCableDirtyUI();
+      });
+      $(".cable-pricing-bar").addEventListener("click", (e) => {
+        const undo = e.target.closest("[data-undo-rule]");
+        if (!undo) return;
+        const key = undo.dataset.undoRule,
+          input = $("#" + key);
+        input.value = state.cableOriginalRules[key];
+        state.cableRuleDraft[key] = input.value;
+        updateCableDirtyUI();
+        input.focus();
+        input.select();
+      });
+      $("#cableFamilies").addEventListener("click", (e) => {
+        const undo = e.target.closest("[data-undo-price]");
+        if (!undo) return;
+        const id = Number(undo.dataset.undoPrice),
+          input = document.querySelector(`[data-draft-price="${id}"]`);
+        input.value = Number(state.cableOriginalPrices.get(id)).toFixed(2);
+        state.cableDraft.set(id, input.value);
+        updateCableDirtyUI();
+        input.focus();
+        input.select();
+      });
+      $("#cableFamilies").addEventListener("keydown", (e) => {
+        if (
+          !e.target.matches("[data-draft-price]") ||
+          !["Enter", "ArrowDown", "ArrowUp"].includes(e.key)
+        )
+          return;
+        e.preventDefault();
+        const inputs = [
+            ...document.querySelectorAll("[data-draft-price]"),
+          ].sort(
+            (a, b) =>
+              state.cables.findIndex(
+                (entry) => entry.id === Number(a.dataset.draftPrice),
+              ) -
+              state.cables.findIndex(
+                (entry) => entry.id === Number(b.dataset.draftPrice),
+              ),
+          ),
+          index = inputs.indexOf(e.target),
+          direction = e.key === "ArrowUp" ? -1 : 1,
+          next = inputs[index + direction];
+        if (next) {
+          next.focus();
+          next.select();
+        }
+      });
+      $("#saveCableChanges").onclick = async () => {
+        const count = cableUnsavedCount();
+        if (!count) return;
+        const button = $("#saveCableChanges");
+        button.disabled = true;
+        try {
+          const result = await api("/api/cables/batch-edit", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              libanDiscount: state.cableRuleDraft?.libanDiscount,
+              mccAdjustment: state.cableRuleDraft?.mccAdjustment,
+              prices: [...state.cableDraft].map(([id, listPrice]) => ({
+                id,
+                listPrice,
+              })),
+            }),
+          });
+          state.cableEditing = false;
+          state.cableDraft.clear();
+          state.cableRuleDraft = null;
+          state.cableOriginalPrices.clear();
+          state.cableOriginalRules = null;
+          $("#cableEditMode").hidden = false;
+          $("#cableEditMode").classList.remove("active");
+          $("#cableEditActions").hidden = true;
+          $("#libanDiscount").disabled = true;
+          $("#mccAdjustment").disabled = true;
+          await refreshCableUpdateDate(result.lastPriceUpdate);
+          toast(`${result.updated} List Prices and pricing settings saved`);
+          await loadCables();
+        } catch (e) {
+          toast(e.message, true);
+          button.disabled = false;
+          updateCableDirtyUI();
+        }
+      };
+      refreshCableUpdateDate();
+
+      // Database-backed, meter-only price book.
+      state.meterFamilies = [];
+      state.meterEditing = false;
+      state.meterOriginal = null;
+      state.meterProductFamily = null;
+      const meterColors = [
+        "#65d18e",
+        "#efb847",
+        "#55bfd0",
+        "#b493ed",
+        "#ed7e7e",
+        "#64a9eb",
+      ];
+      function meterInput(value, attribute, label) {
+        return `<input ${attribute} value="${esc(value)}" aria-label="${esc(label)}">`;
+      }
+      function renderMeterFamilies() {
+        const editing = state.meterEditing,
+          families = Array.isArray(state.meterFamilies)
+            ? state.meterFamilies
+            : [];
+        $("#meterFamilies").innerHTML = families.length
+          ? families
+              .map((family, index) => {
+                const items = Array.isArray(family?.items) ? family.items : [],
+                  rows = items
+                    .map(
+                      (item) =>
+                        `<div class="meter-row" data-meter-item="${item.id}"><div>${editing ? meterInput(item.name, "data-meter-name", "Product Name") : esc(item.name)}</div><div class="meter-number">${editing ? meterInput(Number(item.cost_per_meter).toFixed(2), 'data-meter-cost type="number" min="0" step="0.01" inputmode="decimal"', "Cost / 1m") : money(item.cost_per_meter)}</div><div class="meter-number">${editing ? meterInput(Number(item.selling_price_per_meter).toFixed(2), 'data-meter-price type="number" min="0" step="0.01" inputmode="decimal"', "Price / 1m") : money(item.selling_price_per_meter)}</div><button class="meter-item-delete" data-delete-meter-item="${item.id}" title="Delete product" ${editing ? "" : "hidden"}>×</button></div>`,
+                    )
+                    .join("");
+                return `<section class="meter-family" data-meter-family="${family.id}" style="--meter-accent:${meterColors[index % meterColors.length]}"><div class="meter-family-head">${editing ? meterInput(family.name, "data-meter-family-name", "Family Name") : `<h2>${esc(family.name)}</h2>`}<button class="meter-delete" data-delete-meter-family="${family.id}" title="Delete family" ${editing ? "" : "hidden"}>×</button></div><div class="meter-table-head"><div>PRODUCT</div><div class="meter-number">COST / 1M</div><div class="meter-number">PRICE / 1M</div><div></div></div>${rows || '<div class="meter-empty">No products yet</div>'}<button class="meter-add-product" data-add-meter-product="${family.id}">+ Add Product</button></section>`;
+              })
+              .join("")
+          : '<div class="empty">No families yet — add your first family</div>';
+      }
+      function updateMeterPriceDate(value) {
+        $("#meterLastPriceUpdate").textContent =
+          "Last price update: " + formatCableUpdateDate(value);
+      }
+      async function loadMeterItems() {
+        try {
+          const [result, meta] = await Promise.all([
+            api("/api/meter-items"),
+            api("/api/meter-items/meta"),
+          ]);
+          state.meterFamilies = Array.isArray(result) ? result : [];
+          updateMeterPriceDate(meta?.lastPriceUpdate || null);
+          renderMeterFamilies();
+        } catch (e) {
+          state.meterFamilies = [];
+          renderMeterFamilies();
+          toast(e.message, true);
+        }
+      }
+      const originalViewButtons = [...document.querySelectorAll("[data-view]")];
+      originalViewButtons.forEach((button) => {
+        const previous = button.onclick;
+        button.onclick = () => {
+          previous();
+          if (button.dataset.view === "meterItems") loadMeterItems();
+        };
+      });
+      $("#addMeterFamily").onclick = () => {
+        const form = $("#meterFamilyForm");
+        form.reset();
+        $("#meterFamilyDialog").showModal();
+        form.name.focus();
+      };
+      document
+        .querySelectorAll("[data-close-meter-family]")
+        .forEach(
+          (button) => (button.onclick = () => $("#meterFamilyDialog").close()),
+        );
+      $("#meterFamilyForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          await api("/api/meter-item-families", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(
+              Object.fromEntries(new FormData(e.currentTarget)),
+            ),
+          });
+          $("#meterFamilyDialog").close();
+          toast("Family created");
+          loadMeterItems();
+        } catch (x) {
+          toast(x.message, true);
+        }
+      };
+      document
+        .querySelectorAll("[data-close-meter-product]")
+        .forEach(
+          (button) => (button.onclick = () => $("#meterProductDialog").close()),
+        );
+      $("#meterProductForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          await api(
+            `/api/meter-item-families/${state.meterProductFamily}/items`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(
+                Object.fromEntries(new FormData(e.currentTarget)),
+              ),
+            },
+          );
+          $("#meterProductDialog").close();
+          toast("Product added");
+          loadMeterItems();
+        } catch (x) {
+          toast(x.message, true);
+        }
+      };
+      function setMeterEditing(active) {
+        state.meterEditing = active;
+        $("#editMeterItems").hidden = active;
+        $("#meterEditActions").hidden = !active;
+        state.meterOriginal = active
+          ? JSON.parse(JSON.stringify(state.meterFamilies))
+          : null;
+        renderMeterFamilies();
+      }
+      $("#editMeterItems").onclick = () => setMeterEditing(true);
+      $("#cancelMeterEdit").onclick = () => {
+        state.meterFamilies = state.meterOriginal;
+        setMeterEditing(false);
+        toast("Unsaved meter changes discarded");
+      };
+      $("#saveMeterChanges").onclick = async () => {
+        const families = [
+            ...document.querySelectorAll("[data-meter-family]"),
+          ].map((card) => ({
+            id: Number(card.dataset.meterFamily),
+            name: card.querySelector("[data-meter-family-name]").value,
+          })),
+          items = [...document.querySelectorAll("[data-meter-item]")].map(
+            (row) => ({
+              id: Number(row.dataset.meterItem),
+              name: row.querySelector("[data-meter-name]").value,
+              costPerMeter: row.querySelector("[data-meter-cost]").value,
+              sellingPricePerMeter:
+                row.querySelector("[data-meter-price]").value,
+            }),
+          );
+        try {
+          await api("/api/meter-items/batch", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ families, items }),
+          });
+          state.meterEditing = false;
+          $("#editMeterItems").hidden = false;
+          $("#meterEditActions").hidden = true;
+          toast("Meter price sheet saved");
+          loadMeterItems();
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      $("#meterFamilies").onclick = async (e) => {
+        const add = e.target.closest("[data-add-meter-product]"),
+          deleteItem = e.target.closest("[data-delete-meter-item]"),
+          deleteFamily = e.target.closest("[data-delete-meter-family]");
+        if (add) {
+          state.meterProductFamily = Number(add.dataset.addMeterProduct);
+          const form = $("#meterProductForm");
+          form.reset();
+          $("#meterProductDialog").showModal();
+          form.name.focus();
+          return;
+        }
+        if (deleteItem) {
+          if (
+            !(await appConfirm({
+              title: "Delete product?",
+              message:
+                "This product will be removed from the meter price sheet. Historical sale snapshots will remain unchanged.",
+              action: "Delete",
+            }))
+          )
+            return;
+          try {
+            await api(
+              "/api/meter-items/" + deleteItem.dataset.deleteMeterItem,
+              { method: "DELETE" },
+            );
+            toast("Product deleted");
+            loadMeterItems();
+          } catch (x) {
+            toast(x.message, true);
+          }
+          return;
+        }
+        if (deleteFamily) {
+          const families = Array.isArray(state.meterFamilies)
+              ? state.meterFamilies
+              : [],
+            family = families.find(
+              (f) => f.id === Number(deleteFamily.dataset.deleteMeterFamily),
+            );
+          if (Array.isArray(family?.items) && family.items.length) {
+            toast("Delete the products in this family first", true);
+            return;
+          }
+          if (
+            !(await appConfirm({
+              title: "Delete empty family?",
+              message: `${family?.name || "This family"} will be permanently deleted.`,
+              action: "Delete",
+            }))
+          )
+            return;
+          try {
+            await api(
+              "/api/meter-item-families/" +
+                deleteFamily.dataset.deleteMeterFamily,
+              { method: "DELETE" },
+            );
+            toast("Family deleted");
+            loadMeterItems();
+          } catch (x) {
+            toast(x.message, true);
+          }
+        }
+      };
+
+      const meterPosButton = document.createElement("button");
+      meterPosButton.className = "btn meter-pos-button";
+      meterPosButton.id = "showMeterResults";
+      meterPosButton.textContent = "+ BY METER";
+      $(".pos-picker-row").appendChild(meterPosButton);
+      async function showMeterPOS() {
+        try {
+          const result = await api("/api/meter-items"),
+            families = Array.isArray(result) ? result : [];
+          state.posMeter = families.flatMap((f) =>
+            (Array.isArray(f?.items) ? f.items : []).map((item) => ({
+              ...item,
+              family_name: f.name,
+            })),
+          );
+          $("#resultCount").textContent = state.posMeter.length + " found";
+          $(".result-label span").textContent = "By Meter";
+          $("#posResults").innerHTML = state.posMeter.length
+            ? state.posMeter
+                .map(
+                  (item) =>
+                    `<button class="result" data-add-meter="${item.id}"><span><span class="result-name">${esc(item.name)}</span><span class="meter-result-family">${esc(item.family_name)} · Meter only · Cost ${money(item.cost_per_meter)}</span></span><span class="result-price">${money(item.selling_price_per_meter)} / m</span></button>`,
+                )
+                .join("")
+            : '<div class="empty">No meter products available</div>';
+        } catch (e) {
+          state.posMeter = [];
+          toast(e.message, true);
+        }
+      }
+      meterPosButton.onclick = showMeterPOS;
+      const productResultClick = $("#posResults").onclick;
+      $("#posResults").onclick = (e) => {
+        const meter = e.target.closest("[data-add-meter]");
+        if (!meter) return productResultClick(e);
+        const item = state.posMeter.find(
+            (x) => x.id === Number(meter.dataset.addMeter),
+          ),
+          key = `meter:${item.id}:${Number(item.cost_per_meter)}:${Number(item.selling_price_per_meter)}`,
+          existing = state.cart.get(key);
+        state.cart.set(key, {
+          cartKey: key,
+          source_type: "meter_item",
+          source_id: item.id,
+          family_name_at_sale: item.family_name,
+          product_name_at_sale: item.name,
+          description_at_sale: `${item.family_name} → ${item.name}`,
+          name_en: item.name,
+          sale_unit: "meter",
+          cost_price_at_sale: Number(item.cost_per_meter),
+          selling_price_at_sale: Number(item.selling_price_per_meter),
+          qty: (existing?.qty || 0) + 1,
+        });
+        renderCart();
+        toast(item.name + " added");
+      };
+      const baseRenderCart = renderCart;
+      renderCart = function () {
+        baseRenderCart();
+        document
+          .querySelectorAll("#cartItems .cart-row")
+          .forEach((row, index) => {
+            const item = [...state.cart.values()][index];
+            if (item?.source_type === "meter_item") {
+              const strong = row.querySelector("strong");
+              strong.insertAdjacentHTML(
+                "beforeend",
+                '<span class="meter-cart-tag">Meter</span>',
+              );
+              row.querySelector(".cart-meta > span").textContent =
+                money(item.selling_price_at_sale) + " / m";
+            }
+          });
+      };
+      const baseCartClick = $("#cartItems").onclick;
+      $("#cartItems").onclick = (e) => {
+        const control = e.target.closest("[data-cart-key]");
+        if (!control || !control.dataset.cartKey.startsWith("meter:"))
+          return baseCartClick(e);
+        const item = state.cart.get(control.dataset.cartKey);
+        if (!item) return;
+        if (control.dataset.cartAction === "plus") item.qty++;
+        if (control.dataset.cartAction === "minus") {
+          item.qty--;
+          if (item.qty <= 0) state.cart.delete(item.cartKey);
+        }
+        if (control.dataset.cartAction === "remove")
+          state.cart.delete(item.cartKey);
+        renderCart();
+      };
+      const meterLastPriceUpdate = document.createElement("small");
+      meterLastPriceUpdate.className = "meter-last-update";
+      meterLastPriceUpdate.id = "meterLastPriceUpdate";
+      meterLastPriceUpdate.textContent = "Last price update: Not yet";
+      $("#meterItems .title-row").appendChild(meterLastPriceUpdate);
+      loadMeterItems();
+      let importRows = [];
+      function resetImport() {
+        importRows = [];
+        $("#csvFile").value = "";
+        $("#fileName").textContent = "No file selected";
+        $("#importPreview").innerHTML = "";
+        $("#importSetup").hidden = false;
+        $("#importResult").hidden = true;
+        $("#confirmImport").disabled = true;
+        $("#confirmImport").textContent = "Import Products";
+      }
+      $("#importProduct").onclick = () => {
+        resetImport();
+        $("#importDialog").showModal();
+      };
+      $("#closeImport").onclick = $("#cancelImport").onclick = () =>
+        $("#importDialog").close();
+      $("#sampleCsv").onclick = () => {
+        const blob = new Blob(
+            [
+              "Product Name,Cost Price,Selling Price\r\nExample Product,1.50,3.00\r\n",
+            ],
+            { type: "text/csv;charset=utf-8" },
+          ),
+          a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "sample-products.csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      };
+      $("#csvFile").onchange = async (e) => {
+        const file = e.target.files[0];
+        resetImport();
+        if (!file) return;
+        $("#fileName").textContent = file.name;
+        try {
+          const data = new FormData();
+          data.append("file", file);
+          const p = await api("/api/products/import/preview", {
+            method: "POST",
+            body: data,
+          });
+          importRows = p.rows;
+          const invalid = p.invalidRows
+            .map(
+              (x) =>
+                `<div class="preview-row"><span>Row ${x.row}</span><span>${esc(x.name || "(empty)")}</span><span class="bad">${esc(x.reason)}</span></div>`,
+            )
+            .join("");
+          const samples = p.previewRows
+            .map(
+              (x) =>
+                `<div class="preview-row"><span>Row ${x.row}</span><span>${esc(x.name)}</span><span class="${x.invalid ? "bad" : ""}">${esc(x.cost)} / ${esc(x.selling)}</span></div>`,
+            )
+            .join("");
+          $("#importPreview").innerHTML =
+            `<div class="import-summary"><b>${p.total.toLocaleString()} rows found</b><br>${p.newCount.toLocaleString()} new products<br>${p.existingCount.toLocaleString()} products already exist<br>${p.errorCount.toLocaleString()} rows have errors</div><div class="import-options"><label><input type="radio" name="importMode" value="skip" checked> Skip existing products</label><label><input type="radio" name="importMode" value="update"> Update existing cost and selling price</label></div><div class="preview-table">${p.errorCount ? invalid : samples}</div>`;
+          $("#confirmImport").disabled = !importRows.length;
+        } catch (x) {
+          importRows = [];
+          $("#importPreview").innerHTML =
+            `<div class="import-summary"><span class="bad">${esc(x.message)}</span></div>`;
+          $("#confirmImport").disabled = true;
+        }
+      };
+      $("#confirmImport").onclick = async () => {
+        if (!importRows.length) return;
+        const button = $("#confirmImport");
+        button.disabled = true;
+        button.textContent = "Importing...";
+        try {
+          const mode =
+              document.querySelector('[name="importMode"]:checked')?.value ||
+              "skip",
+            r = await api("/api/products/import", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ rows: importRows, mode }),
+            });
+          $("#importSetup").hidden = true;
+          $("#importResult").hidden = false;
+          $("#importResult").innerHTML =
+            `<b>Import complete</b><br>${r.added.toLocaleString()} products added<br>${r.updated.toLocaleString()} updated<br>${r.skipped.toLocaleString()} skipped<br>${r.failed.toLocaleString()} failed`;
+          button.textContent = "Import Products";
+          await loadProducts();
+        } catch (x) {
+          toast(x.message, true);
+          button.disabled = false;
+          button.textContent = "Import Products";
+        }
+      };
+    </script>
+    <script src="/purchases.js"></script>
+    <script src="/pos-v1.js"></script>
+    <script src="/pos-v3.js"></script>
+    <script src="/pos-v4.js"></script>
+    <script src="/clients.js"></script>
+    <script src="/orders.js"></script>
+    <script src="/ali-baba.js"></script>
+    <script src="/cash-settings.js"></script>
+    <script src="/utilities.js"></script>
+  </body>
+</html>

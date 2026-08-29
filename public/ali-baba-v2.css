@@ -1,0 +1,1 @@
+.ali-history-head,.ali-history-row{grid-template-columns:130px 90px minmax(180px,1fr) 130px 130px 68px}.ali-history-row>div:last-child{display:flex;justify-content:flex-end}.ali-history-row [data-ali-edit]{color:#d4aa5d}@media(max-width:700px){.ali-history-row{grid-template-columns:1fr auto}.ali-history-row>div:last-child{justify-content:flex-start}}

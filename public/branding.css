@@ -1,0 +1,14 @@
+:root{--accent:#f5b400}
+.topbar{height:64px;min-height:64px;padding:0 18px;gap:13px;background:#101112;border-bottom-color:#303234}
+.brand-home{position:relative;display:block;flex:0 0 174px;width:174px;height:54px;overflow:hidden;border:0;background:transparent;padding:0;pointer-events:none;user-select:none}
+.brand-home img{position:absolute;width:174px;height:auto;max-width:none;left:0;top:50%;transform:translateY(-50%);object-fit:contain;mix-blend-mode:lighten}
+.pos-home{height:38px!important;border-color:#99731d!important;background:var(--accent)!important;color:#17130b!important;padding:0 17px!important;font-weight:900!important;letter-spacing:.04em}
+.nav button.active{border-color:var(--accent)}
+.nav button[data-view=dashboard]{font-weight:800}.nav button[data-view=dashboard].active{color:#ffd757}
+.settings-gear:hover{border-color:var(--accent);color:var(--accent)}
+.dashboard-title h1,.dash-section-title h2,.dash-chart-panel h2,.dash-recent h2{color:#f5f5f2}
+.dashboard-title h1:after{content:'';display:block;width:32px;height:3px;margin-top:5px;border-radius:3px;background:var(--accent)}
+.calendar-day:hover,.calendar-day.selected{border-color:var(--accent)}.calendar-day.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.dash-chart rect{fill:#f5b400aa}.chart-key i{background:var(--accent)}
+@media(max-width:900px){.topbar{padding-inline:10px;gap:8px}.brand-home{flex-basis:142px;width:142px}.brand-home img{width:142px}.nav button{padding-inline:10px}}
+@media(max-width:620px){.topbar{height:auto;min-height:58px;display:grid;grid-template-columns:34px 112px 48px minmax(0,1fr);padding:3px 8px;gap:5px}.settings-gear{grid-column:1}.brand-home{grid-column:2;flex-basis:auto;width:112px;height:50px}.brand-home img{width:112px}.pos-home{grid-column:3;width:48px;height:34px!important;padding:0!important;font-size:11px!important}.nav{grid-column:4;min-width:0;height:52px}.nav button{height:52px!important;padding-inline:9px!important;font-size:11px}.clock{display:none}}
