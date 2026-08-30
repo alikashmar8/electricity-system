@@ -6,3 +6,6 @@ database/*.db
 database/*.db-shm
 database/*.db-wal
 database/sessions.sqlite
+database/*.sqlite
+database/*.sqlite-shm
+database/*.sqlite-wal

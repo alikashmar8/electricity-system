@@ -1,5 +1,7 @@
 require('dotenv').config({ quiet: true });
 const express = require('express');
+const Database = require('better-sqlite3');
+const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const { parse } = require('csv-parse/sync');
@@ -8,6 +10,24 @@ const bcrypt = require('bcryptjs');
 const { rateLimit } = require('express-rate-limit');
 const { DateTime } = require('luxon');
 const db = require('./database');
+
+const sessionDbPath = process.env.SESSION_DB_PATH
+    ? path.resolve(process.env.SESSION_DB_PATH)
+    : path.join(__dirname, 'database', 'sessions.sqlite');
+fs.mkdirSync(path.dirname(sessionDbPath), { recursive: true });
+const sessionDb = new Database(sessionDbPath);
+sessionDb.exec(`CREATE TABLE IF NOT EXISTS auth_sessions (
+    sid TEXT PRIMARY KEY,
+    session_json TEXT NOT NULL,
+    expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires ON auth_sessions(expires_at);`);
+if (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='auth_sessions'").get()
+    && sessionDb.prepare('SELECT COUNT(1) AS count FROM auth_sessions').get().count === 0) {
+    const copySession = sessionDb.prepare('INSERT OR IGNORE INTO auth_sessions(sid,session_json,expires_at) VALUES(?,?,?)');
+    sessionDb.transaction(rows => rows.forEach(row => copySession.run(row.sid, row.session_json, row.expires_at)))
+        (db.prepare('SELECT sid,session_json,expires_at FROM auth_sessions').all());
+}
 
 class BetterSqliteSessionStore extends session.Store {
     constructor(database) {
@@ -40,6 +60,7 @@ class BetterSqliteSessionStore extends session.Store {
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 const SESSION_COOKIE = 'dakkak.sid';
 const AUTH_TIME_ZONE = 'Asia/Beirut';
 const sessionSecret = process.env.SESSION_SECRET;
@@ -54,14 +75,15 @@ const csvUpload = multer({
 // Allow the app to receive JSON data
 app.use(express.json({ limit: '5mb' }));
 
-app.set('trust proxy', process.env.TRUST_PROXY === '1' ? 1 : false);
+const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY || '0', 10);
+app.set('trust proxy', Number.isInteger(trustProxyHops) && trustProxyHops > 0 ? trustProxyHops : false);
 app.use(session({
     name: SESSION_COOKIE,
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     rolling: false,
-    store: new BetterSqliteSessionStore(db),
+    store: new BetterSqliteSessionStore(sessionDb),
     cookie: { httpOnly: true, sameSite: 'lax', secure: process.env.COOKIE_SECURE === 'true' }
 }));
 
@@ -136,16 +158,10 @@ app.post('/api/auth/change-password', requireAuth, async (req, res) => {
     destroySession(req, res, () => res.json({ changed: true, loginRequired: true }));
 });
 
+app.get('/api/status', (req, res) => res.json({ ok: true, environment: NODE_ENV }));
+
 app.use('/api', requireAuth);
 app.use('/api/settings/reset-transactions', requireAdmin);
-
-// Test route
-app.get('/api/status', (req, res) => {
-    res.json({
-        status: 'ok',
-        message: 'Dakkak Electric is running'
-    });
-});
 
 app.get('/api/cable-settings', (req, res) => {
     const value = db.prepare("SELECT value FROM app_settings WHERE key = 'cable_show_list_prices'").get()?.value;
@@ -1480,10 +1496,26 @@ app.use((error, req, res, next) => {
     if (error instanceof multer.MulterError) {
         return res.status(400).json({ error: error.code === 'LIMIT_FILE_SIZE' ? 'CSV file is too large (maximum 5 MB)' : error.message });
     }
-    res.status(500).json({ error: error.message || 'Request failed' });
+    console.error('Unhandled request error:', error);
+    res.status(500).json({ error: NODE_ENV === 'production' ? 'Request failed' : (error.message || 'Request failed') });
 });
 
 // Start the server
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Dakkak Electric is running at http://localhost:${PORT}`);
 });
+
+let shuttingDown = false;
+function shutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`${signal} received; shutting down cleanly.`);
+    server.close(() => {
+        try { sessionDb.close(); } catch {}
+        try { db.close(); } catch {}
+        process.exit(0);
+    });
+    setTimeout(() => process.exit(1), 10000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

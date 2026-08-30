@@ -1,8 +1,13 @@
+require('dotenv').config({ quiet: true });
 const Database = require('better-sqlite3');
+const fs = require('fs');
 const path = require('path');
 
 // Database location
-const dbPath = path.join(__dirname, 'database', 'sandbox.db');
+const dbPath = process.env.DATABASE_PATH
+    ? path.resolve(process.env.DATABASE_PATH)
+    : path.join(__dirname, 'database', 'sandbox.db');
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 // Create/open the database
 const db = new Database(dbPath);
@@ -153,12 +158,6 @@ db.exec(`
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
-    CREATE TABLE IF NOT EXISTS auth_sessions (
-        sid TEXT PRIMARY KEY,
-        session_json TEXT NOT NULL,
-        expires_at INTEGER NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires ON auth_sessions(expires_at);
 
     CREATE TABLE IF NOT EXISTS cable_families (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
