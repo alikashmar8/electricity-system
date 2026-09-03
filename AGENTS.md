@@ -36,4 +36,3 @@ Before the final response to **every user prompt**, review what was learned duri
 - Run `node --check` on every changed JavaScript file.
 - For server/database changes, start the app against disposable SQLite paths with a temporary `SESSION_SECRET` of at least 32 characters and exercise the affected endpoint.
 - There is currently no automated test suite; `npm test` is only a failing placeholder. State exactly which manual or syntax checks were performed.
-
