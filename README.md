@@ -1,5 +1,11 @@
 # Dakkak Electric
 
+## Project documentation
+
+- [Production-readiness roadmap](docs/production-readiness/README.md)
+- [Repository working instructions](AGENTS.md)
+- [Project playbook](SKILLS.md)
+
 ## Production deployment
 
 The application is served by Node.js/Express and keeps business data and login sessions in SQLite. Production SQLite files **must be placed on persistent storage**; an ephemeral application filesystem will lose data during restarts or redeploys.
